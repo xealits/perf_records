@@ -16,6 +16,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_library(perf_counters INTERFACE perf_counters.hpp)
 target_include_directories(perf_counters INTERFACE ${PROJECT_SOURCE_DIR}/)
 
+add_library(records INTERFACE records.hpp)
+target_include_directories(records INTERFACE ${PROJECT_SOURCE_DIR}/)
+
 add_executable(example example.cpp)
-target_link_libraries(example PRIVATE perf_counters)
+target_link_libraries(example PRIVATE perf_counters records)
 

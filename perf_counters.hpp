@@ -17,32 +17,30 @@
 #define add_counter(event, ...) add_counter_impl(event, #event, ##__VA_ARGS__)
 
 class PerfCounter {
+ public:
+  using CounterFD_t = decltype(syscall(__NR_perf_event_open, 0, 0, 0, -1, 0));
+  using CounterId_t = uint64_t;
+  using CounterVal_t = uint64_t;
+  using CounterName_t = std::string;
+
+  struct CounterDesc {
+    CounterId_t c_id{};
+    CounterVal_t c_val{0};
+    CounterName_t c_name;
+    decltype(perf_event_attr{}.config) c_config{};
+    decltype(perf_event_attr{}.type) c_type{};
+  };
+
+ private:
   bool counter_is_running{false};
   int group_fd{-1};  // this fd will be the counter group fd
-  using CounterFD_t = decltype(syscall(__NR_perf_event_open, 0, 0, 0, -1, 0));
   std::vector<CounterFD_t> counters_fds;
   // fd_cycles, fd_backend;
   pid_t pid_{0};
   int cpu_{-1};
 
   struct perf_event_attr pe{};
-  // uint64_t id1, id_cycles, id_backend;
-  // uint64_t val1, val_cycles, val_backend;
-  using CounterId_t = uint64_t;
-  using CounterVal_t = uint64_t;
-  using CounterName_t = std::string;
-  // std::vector<CounterId_t> counter_ids;
-  // std::vector<CounterName_t> counter_names;
-  // std::vector<decltype(pe.type)> counter_types;
-  // std::vector<decltype(pe.config)> counter_configs;
 
-  struct CounterDesc {
-    CounterId_t c_id;
-    CounterVal_t c_val{0};
-    CounterName_t c_name;
-    decltype(pe.config) c_config;
-    decltype(pe.type) c_type;
-  };
   std::map<CounterId_t, CounterDesc> counters_;
 
   static constexpr unsigned perf_data_buffer_size_ = 4096;
@@ -125,7 +123,6 @@ class PerfCounter {
                          .c_name = counter_name_s,
                          .c_config = counter_config,
                          .c_type = counter_type};
-    std::cerr << "pushed " << counter_name_s << " " << counters_.size() << "\n";
   }
 
   void start_count(void) {
@@ -169,8 +166,6 @@ class PerfCounter {
       auto counter = counters_.at(counter_id);
       counter.c_val = counter_value;
       res.push_back(counter);
-      std::cerr << "pushed to res id " << counter_id << " " << counter.c_name
-                << " " << counter_value << "\n";
     }
 
     return res;

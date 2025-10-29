@@ -3,10 +3,16 @@
 #include <thread>
 
 #include "perf_counters.hpp"
+#include "records.hpp"
 
 void code_under_test(void) {
   using namespace std::chrono_literals;
   std::this_thread::sleep_for(2s);
+}
+
+Record<PerfCounter::CounterVal_t> translate_perf_record(
+    PerfCounter::CounterDesc perf_count) {
+  return {.column_name = perf_count.c_name, .value = perf_count.c_val};
 }
 
 int main() {
@@ -20,9 +26,15 @@ int main() {
   count1.stop_count();
 
   auto res = count1.read_counters();
+
+  Record<PerfCounter::CounterVal_t> bench("testing X");
   for (const auto& rec : res) {
-    std::cout << rec.c_id << " : " << rec.c_name << " = " << rec.c_val << "\n";
+    bench.subrecs.push_back(translate_perf_record(rec));
+    // std::cout << rec.c_id << " : " << rec.c_name << " = " << rec.c_val <<
+    // "\n";
   }
+
+  std::cout << bench << "\n";
 
   return 0;
 }
