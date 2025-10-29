@@ -21,7 +21,7 @@ int main() {
 
   auto res = count1.read_counters();
   for (const auto& rec : res) {
-    std::cout << rec.c_id << " = " << rec.c_val << "\n";
+    std::cout << rec.c_id << " : " << rec.c_name << " = " << rec.c_val << "\n";
   }
 
   return 0;

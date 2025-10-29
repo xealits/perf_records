@@ -7,7 +7,14 @@
 // #include <linux/hw_breakpoint.h>
 #include <asm/unistd.h>
 
+#include <map>
+#include <string>
 #include <vector>
+
+// a macro for the users
+// the point is to to turn the perf_event.h enum into a string
+// libpfm has pfm_get_event_name for that
+#define add_counter(event, ...) add_counter_impl(event, #event, ##__VA_ARGS__)
 
 class PerfCounter {
   bool counter_is_running{false};
@@ -23,16 +30,20 @@ class PerfCounter {
   // uint64_t val1, val_cycles, val_backend;
   using CounterId_t = uint64_t;
   using CounterVal_t = uint64_t;
-  std::vector<CounterId_t> counter_ids;
-  std::vector<decltype(pe.type)> counter_types;
-  std::vector<decltype(pe.config)> counter_configs;
+  using CounterName_t = std::string;
+  // std::vector<CounterId_t> counter_ids;
+  // std::vector<CounterName_t> counter_names;
+  // std::vector<decltype(pe.type)> counter_types;
+  // std::vector<decltype(pe.config)> counter_configs;
 
   struct CounterDesc {
     CounterId_t c_id;
-    CounterId_t c_val;
-    decltype(pe.type) c_type;
+    CounterVal_t c_val{0};
+    CounterName_t c_name;
     decltype(pe.config) c_config;
+    decltype(pe.type) c_type;
   };
+  std::map<CounterId_t, CounterDesc> counters_;
 
   static constexpr unsigned perf_data_buffer_size_ = 4096;
   char buf[perf_data_buffer_size_] = {};
@@ -72,8 +83,9 @@ class PerfCounter {
     }
   };
 
-  void add_counter(decltype(pe.config) counter_config /* counter name */,
-                   decltype(pe.type) counter_type = PERF_TYPE_HARDWARE)
+  void add_counter_impl(decltype(pe.config) counter_config /* counter name */,
+                        CounterName_t counter_name_s,
+                        decltype(pe.type) counter_type = PERF_TYPE_HARDWARE)
 
   {
     memset(&pe, 0, sizeof(struct perf_event_attr));
@@ -105,9 +117,15 @@ class PerfCounter {
     CounterId_t new_id{};
     ioctl(new_counter_fd, PERF_EVENT_IOC_ID, &new_id);
 
-    counter_ids.push_back(new_id);
-    counter_types.push_back(counter_type);
-    counter_configs.push_back(counter_config);
+    // counter_ids.push_back(new_id);
+    // counter_types.push_back(counter_type);
+    // counter_configs.push_back(counter_config);
+    // counter_names.push_back(counter_name_s);
+    counters_[new_id] = {.c_id = new_id,
+                         .c_name = counter_name_s,
+                         .c_config = counter_config,
+                         .c_type = counter_type};
+    std::cerr << "pushed " << counter_name_s << " " << counters_.size() << "\n";
   }
 
   void start_count(void) {
@@ -147,21 +165,12 @@ class PerfCounter {
       const CounterId_t& counter_id = pdata->values[count_i].id;
       const CounterVal_t& counter_value = pdata->values[count_i].value;
 
-      auto ind_iter =
-          std::find(counter_ids.begin(), counter_ids.end(), counter_id);
-      if (ind_iter == counter_ids.end()) {
-        throw std::runtime_error(
-            "PerfCounter::read_counters got unknown counter ID");
-      }
-
       //
-      auto ind = *ind_iter;
-      res.push_back({
-          .c_id = counter_id,
-          .c_val = counter_value,
-          .c_type = counter_types[ind],
-          .c_config = counter_configs[ind],
-      });
+      auto counter = counters_.at(counter_id);
+      counter.c_val = counter_value;
+      res.push_back(counter);
+      std::cerr << "pushed to res id " << counter_id << " " << counter.c_name
+                << " " << counter_value << "\n";
     }
 
     return res;
