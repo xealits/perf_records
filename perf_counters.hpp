@@ -1,0 +1,163 @@
+// set up perf
+#include <errno.h>
+#include <linux/perf_event.h>
+#include <sys/ioctl.h>
+
+#include <cstring>
+// #include <linux/hw_breakpoint.h>
+#include <asm/unistd.h>
+
+#include <vector>
+
+class PerfCounter {
+  bool counter_is_running{false};
+  int group_fd{-1};  // this fd will be the counter group fd
+  std::vector<int> counters_fds;
+  // fd_cycles, fd_backend;
+  pid_t pid_{0};
+  int cpu_{-1};
+
+  int sum;
+  long long count;
+  struct perf_event_attr pe;
+  // uint64_t id1, id_cycles, id_backend;
+  // uint64_t val1, val_cycles, val_backend;
+  using CounterId_t = uint64_t;
+  using CounterVal_t = uint64_t;
+  std::vector<CounterId_t> counter_ids;
+  std::vector<decltype(pe.type)> counter_types;
+  std::vector<decltype(pe.config)> counter_configs;
+
+  struct CounterDesc {
+    CounterId_t c_id;
+    CounterId_t c_val;
+    decltype(pe.type) c_type;
+    decltype(pe.config) c_config;
+  };
+
+  char buf[4096];
+
+  // TODO: does the linux header have this struct???
+  struct read_format {
+    uint64_t nr;
+    struct {
+      uint64_t value;
+      uint64_t id;
+    } values[];
+  };
+
+  // struct read_format* rf = (struct read_format*) buf;
+
+  static long perf_event_open(struct perf_event_attr* hw_event, pid_t pid,
+                              int cpu, int group_fd, unsigned long flags) {
+    int ret;
+
+    ret = syscall(__NR_perf_event_open, hw_event, pid, cpu, group_fd, flags);
+    // ret = sys_perf_event_open( hw_event, pid, cpu,
+    //                group_fd, flags);
+
+    return ret;
+  }
+
+ public:
+  ~PerfCounter() {
+    for (auto counter_fd : counters_fds) {
+      close(counter_fd);
+    }
+  };
+
+  void add_counter(decltype(pe.config) counter_config /* counter name */,
+                   decltype(pe.type) counter_type = PERF_TYPE_HARDWARE)
+
+  {
+    memset(&pe, 0, sizeof(struct perf_event_attr));
+    // pe.type     = UNCORE_IMC_TYPE;
+    // pe.config   = UNCORE_IMC_EVENT_READ;
+    pe.type = counter_type;
+    pe.config = counter_config;  // PERF_COUNT_HW_INSTRUCTIONS
+    pe.size = sizeof(struct perf_event_attr);
+    // pe.size     = sizeof(struct perf_event_attr);
+    pe.disabled = 1;
+    pe.exclude_kernel = 1;
+    pe.exclude_hv = 1;
+    pe.read_format = PERF_FORMAT_GROUP | PERF_FORMAT_ID;
+
+    int new_counter_fd = perf_event_open(&pe, pid_, cpu_, group_fd, 0);
+    if (new_counter_fd == -1) {
+      fprintf(
+          stderr,
+          "PerfCounter::perf_event_open error opening leader %llx: %d: %s\n",
+          pe.config, errno, std::strerror(errno));
+      exit(EXIT_FAILURE);
+    }
+    counters_fds.push_back(new_counter_fd);
+
+    // if it is a brand new group:
+    if (group_fd == -1) {
+      group_fd = new_counter_fd;
+    }
+
+    CounterId_t new_id;
+    ioctl(new_counter_fd, PERF_EVENT_IOC_ID, &new_id);
+
+    counter_ids.push_back(new_id);
+    counter_types.push_back(counter_type);
+    counter_configs.push_back(counter_config);
+  }
+
+  inline void start_count(void) {
+    if (group_fd == -1) {
+      throw std::runtime_error(
+          "PerfCounter::start_count called without counters");
+    }
+
+    ioctl(group_fd, PERF_EVENT_IOC_RESET, PERF_IOC_FLAG_GROUP);
+    ioctl(group_fd, PERF_EVENT_IOC_ENABLE, PERF_IOC_FLAG_GROUP);
+    counter_is_running = true;
+  }
+
+  inline void stop_count(void) {
+    if (!counter_is_running) {
+      return;
+    }
+
+    ioctl(group_fd, PERF_EVENT_IOC_DISABLE, PERF_IOC_FLAG_GROUP);
+    counter_is_running = false;
+  }
+
+  std::vector<CounterDesc> read_counters(void) {
+    std::vector<CounterDesc> res;
+    stop_count();
+
+    read(group_fd, buf, sizeof(buf));
+    struct read_format* rf = (struct read_format*)buf;
+
+    if ((sizeof(rf->nr) + rf->nr * sizeof(rf->values[0])) > sizeof(buf)) {
+      throw std::runtime_error(
+          "PerfCounter::read_counters got more data than the internal buffer");
+    }
+
+    for (int count_i = 0; count_i < rf->nr; count_i++) {
+      const CounterId_t& counter_id = rf->values[count_i].id;
+      const CounterVal_t& counter_value = rf->values[count_i].value;
+
+      auto ind_iter =
+          std::find(counter_ids.begin(), counter_ids.end(), counter_id);
+      if (ind_iter == counter_ids.end()) {
+        throw std::runtime_error(
+            "PerfCounter::read_counters got unknown counter ID");
+      }
+
+      //
+      auto ind = *ind_iter;
+      res.push_back({
+          .c_id = counter_id,
+          .c_val = counter_value,
+          .c_type = counter_types[ind],
+          .c_config = counter_configs[ind],
+      });
+    }
+
+    return res;
+  }
+};
