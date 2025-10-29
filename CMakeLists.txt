@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.28..4)
 
-project(perf_counters
+project(perf_records
   LANGUAGES CXX)
 
 # only set the cxx_standard if it is not set by someone else
