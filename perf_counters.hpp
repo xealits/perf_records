@@ -12,14 +12,13 @@
 class PerfCounter {
   bool counter_is_running{false};
   int group_fd{-1};  // this fd will be the counter group fd
-  std::vector<int> counters_fds;
+  using CounterFD_t = decltype(syscall(__NR_perf_event_open, 0, 0, 0, -1, 0));
+  std::vector<CounterFD_t> counters_fds;
   // fd_cycles, fd_backend;
   pid_t pid_{0};
   int cpu_{-1};
 
-  int sum;
-  long long count;
-  struct perf_event_attr pe;
+  struct perf_event_attr pe{};
   // uint64_t id1, id_cycles, id_backend;
   // uint64_t val1, val_cycles, val_backend;
   using CounterId_t = uint64_t;
@@ -35,7 +34,8 @@ class PerfCounter {
     decltype(pe.config) c_config;
   };
 
-  char buf[4096];
+  static constexpr unsigned perf_data_buffer_size_ = 4096;
+  char buf[perf_data_buffer_size_] = {};
 
   // TODO: does the linux header have this struct???
   struct read_format {
@@ -48,11 +48,11 @@ class PerfCounter {
 
   // struct read_format* rf = (struct read_format*) buf;
 
-  static long perf_event_open(struct perf_event_attr* hw_event, pid_t pid,
-                              int cpu, int group_fd, unsigned long flags) {
-    int ret;
-
-    ret = syscall(__NR_perf_event_open, hw_event, pid, cpu, group_fd, flags);
+  static CounterFD_t perf_event_open(struct perf_event_attr* hw_event,
+                                     pid_t pid, int cpu, int group_fd,
+                                     unsigned long flags) {
+    CounterFD_t ret =
+        syscall(__NR_perf_event_open, hw_event, pid, cpu, group_fd, flags);
     // ret = sys_perf_event_open( hw_event, pid, cpu,
     //                group_fd, flags);
 
@@ -60,6 +60,12 @@ class PerfCounter {
   }
 
  public:
+  PerfCounter(void) = default;  // no other constructors
+  PerfCounter(const PerfCounter& ref) = delete;
+  PerfCounter(PerfCounter&& ref) = delete;
+  PerfCounter& operator=(const PerfCounter&) = delete;
+  PerfCounter& operator=(PerfCounter&&) = delete;
+
   ~PerfCounter() {
     for (auto counter_fd : counters_fds) {
       close(counter_fd);
@@ -82,12 +88,11 @@ class PerfCounter {
     pe.exclude_hv = 1;
     pe.read_format = PERF_FORMAT_GROUP | PERF_FORMAT_ID;
 
-    int new_counter_fd = perf_event_open(&pe, pid_, cpu_, group_fd, 0);
+    CounterFD_t new_counter_fd = perf_event_open(&pe, pid_, cpu_, group_fd, 0);
     if (new_counter_fd == -1) {
-      fprintf(
-          stderr,
-          "PerfCounter::perf_event_open error opening leader %llx: %d: %s\n",
-          pe.config, errno, std::strerror(errno));
+      std::cerr << "PerfCounter::perf_event_open error opening leader "
+                << std::hex << pe.config << std::dec << errno
+                << std::strerror(errno) << "\n";
       exit(EXIT_FAILURE);
     }
     counters_fds.push_back(new_counter_fd);
@@ -97,7 +102,7 @@ class PerfCounter {
       group_fd = new_counter_fd;
     }
 
-    CounterId_t new_id;
+    CounterId_t new_id{};
     ioctl(new_counter_fd, PERF_EVENT_IOC_ID, &new_id);
 
     counter_ids.push_back(new_id);
@@ -105,7 +110,7 @@ class PerfCounter {
     counter_configs.push_back(counter_config);
   }
 
-  inline void start_count(void) {
+  void start_count(void) {
     if (group_fd == -1) {
       throw std::runtime_error(
           "PerfCounter::start_count called without counters");
@@ -116,7 +121,7 @@ class PerfCounter {
     counter_is_running = true;
   }
 
-  inline void stop_count(void) {
+  void stop_count(void) {
     if (!counter_is_running) {
       return;
     }
@@ -129,17 +134,18 @@ class PerfCounter {
     std::vector<CounterDesc> res;
     stop_count();
 
-    read(group_fd, buf, sizeof(buf));
-    struct read_format* rf = (struct read_format*)buf;
+    read(group_fd, &(buf[0]), sizeof(buf));
+    struct read_format* pdata = reinterpret_cast<struct read_format*>(buf);
 
-    if ((sizeof(rf->nr) + rf->nr * sizeof(rf->values[0])) > sizeof(buf)) {
+    if ((sizeof(pdata->nr) + pdata->nr * sizeof(pdata->values[0])) >
+        sizeof(buf)) {
       throw std::runtime_error(
           "PerfCounter::read_counters got more data than the internal buffer");
     }
 
-    for (int count_i = 0; count_i < rf->nr; count_i++) {
-      const CounterId_t& counter_id = rf->values[count_i].id;
-      const CounterVal_t& counter_value = rf->values[count_i].value;
+    for (int count_i = 0; count_i < pdata->nr; count_i++) {
+      const CounterId_t& counter_id = pdata->values[count_i].id;
+      const CounterVal_t& counter_value = pdata->values[count_i].value;
 
       auto ind_iter =
           std::find(counter_ids.begin(), counter_ids.end(), counter_id);
