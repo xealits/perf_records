@@ -6,6 +6,10 @@
 #include "records.hpp"
 
 void code_under_test(void) {
+  for (unsigned ind = 0; ind < 5; ind++) {
+    std::cout << ind << '\n';
+  }
+
   using namespace std::chrono_literals;
   std::this_thread::sleep_for(2s);
 }
@@ -17,9 +21,15 @@ Record<PerfCounter::CounterVal_t> translate_perf_record(
 
 int main() {
   PerfCounter count1{};
-  count1.add_counter(PERF_COUNT_HW_INSTRUCTIONS);
-  count1.add_counter(PERF_COUNT_HW_CPU_CYCLES);
-  // count1.add_counter(PERF_COUNT_HW_STALLED_CYCLES_BACKEND);
+  //count1.add_counter("PERF_COUNT_HW_INSTRUCTIONS");
+  //count1.add_counter("PERF_COUNT_HW_CPU_CYCLES");
+  count1.add_counter("cpu-cycles");
+  count1.add_counter("cache-references");
+  count1.add_counter("cache-misses");
+  //count1.add_counter("topdown-fe-bound");
+  //count1.add_counter("topdown-be-bound");
+  //count1.add_counter("topdown-retiring");
+  //count1.add_counter("PERF_COUNT_HW_STALLED_CYCLES_BACKEND");
 
   count1.start_count();
   code_under_test();
