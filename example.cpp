@@ -36,10 +36,12 @@ int main() {
   // count1.add_counter("PERF_COUNT_HW_CPU_CYCLES");
   count1.add_counter("cpu-cycles");
   count1.add_counter("cache-references");
-  count1.add_counter("cache-misses");
-  // count1.add_counter("topdown-fe-bound");
-  // count1.add_counter("topdown-be-bound");
-  // count1.add_counter("topdown-retiring");
+  //count1.add_counter("cache-misses");
+
+  //count1.add_group(
+  //    {"topdown-fe-bound", "topdown-retiring"});
+  count1.add_group(
+      {"topdown-fe-bound", "topdown-be-bound", "topdown-retiring"});
   // count1.add_counter("PERF_COUNT_HW_STALLED_CYCLES_BACKEND");
 
   auto thr = std::thread([](void) {
@@ -57,6 +59,7 @@ int main() {
     auto bench = translate_perf_counters("testing thread", res);
     std::cout << bench << "\n";
   });
+  thr.join();
 
   count1.start_count();
   code_under_test();
@@ -65,8 +68,6 @@ int main() {
   auto res = count1.get_data();
   auto bench = translate_perf_counters("testing X", res);
   std::cout << bench << "\n";
-
-  thr.join();
 
   return 0;
 }

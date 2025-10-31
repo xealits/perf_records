@@ -9,6 +9,7 @@
 #include <asm/unistd.h>
 
 #include <map>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -88,13 +89,14 @@ class PerfCounter {
 
  private:
   bool counter_is_running{false};
-  int group_fd{-1};  // this fd will be the counter group fd
+  // int group_fd{-1};  // this fd will be the counter group fd
   std::vector<CounterFD_t> counters_fds;
   // fd_cycles, fd_backend;
   pid_t pid_{0};
   int cpu_{-1};
 
   std::map<CounterId_t, CounterDesc> counters_;
+  std::map<int, std::vector<CounterId_t>> counter_groups_;
 
   static constexpr unsigned perf_data_buffer_size_ = 4096;
   char buf[perf_data_buffer_size_] = {};
@@ -102,7 +104,7 @@ class PerfCounter {
   // I need to handle groups better:
   // report when events are dropped because the group does not fit in counters
   // make a better UI to add individual separate events or groups
-  struct read_format {
+  struct read_format_group {
     uint64_t nr;
     uint64_t time_enabled;  // an event group is scheduled atomically
     uint64_t time_running;
@@ -111,6 +113,19 @@ class PerfCounter {
       uint64_t id;
     } values[];
   };
+
+  struct read_format_single {
+    uint64_t value;
+    uint64_t time_enabled;
+    uint64_t time_running;
+    uint64_t id;
+  };
+
+  static_assert(sizeof(read_format_single) < sizeof(buf));
+
+  static constexpr auto basic_read_format = PERF_FORMAT_ID |
+                                            PERF_FORMAT_TOTAL_TIME_ENABLED |
+                                            PERF_FORMAT_TOTAL_TIME_RUNNING;
 
   // struct read_format* rf = (struct read_format*) buf;
 
@@ -129,29 +144,57 @@ class PerfCounter {
     std::vector<CounterDesc> res;
     stop_count();
 
-    read(group_fd, &(buf[0]), sizeof(buf));
-    struct read_format* pdata = reinterpret_cast<struct read_format*>(buf);
+    for (const auto& [group_fd, cids] : counter_groups_) {
+      read(group_fd, &(buf[0]), sizeof(buf));
 
-    if ((sizeof(pdata->nr) + pdata->nr * sizeof(pdata->values[0])) >
-        sizeof(buf)) {
-      throw std::runtime_error(
-          "PerfCounter::read_counters got more data than the internal buffer");
-    }
+      if (cids.size() == 1) {
+        struct read_format_single* pdata =
+            reinterpret_cast<struct read_format_single*>(buf);
 
-    std::cout << "PerfCounter::read_counters group ran as " << std::dec
-              << pdata->time_running << " / " << pdata->time_enabled << "\n";
+        std::cout << "PerfCounter::read_counters counter ran as " << std::dec
+                  << pdata->time_running << " / " << pdata->time_enabled
+                  << "\n";
 
-    for (int count_i = 0; count_i < pdata->nr; count_i++) {
-      const auto& counter_res = pdata->values[count_i];
-      const CounterId_t& counter_id = counter_res.id;
-      const CounterVal_t& counter_value = counter_res.value;
-      std::cout << "PerfCounter::read_counters " << counter_id << " "
-                << counter_value << "\n";
+        //
+        auto counter_id = cids.at(0);
+        if (counter_id != pdata->id) {
+          throw std::runtime_error(
+              "PerfCounter::read_counters read unexpected counter id");
+        }
 
-      //
-      auto& counter = counters_.at(counter_id);
-      counter.c_val = counter_value;
-      // res.push_back(counter);
+        auto& counter = counters_.at(counter_id);
+        counter.c_val = pdata->value;
+      }
+
+      else {
+        struct read_format_group* pdata =
+            reinterpret_cast<struct read_format_group*>(buf);
+
+        // FIXME this is not exactly correct:
+        if ((sizeof(pdata->nr) + pdata->nr * sizeof(pdata->values[0])) >
+            sizeof(buf)) {
+          throw std::runtime_error(
+              "PerfCounter::read_counters got more data than the internal "
+              "buffer");
+        }
+
+        std::cout << "PerfCounter::read_counters group ran as " << std::dec
+                  << pdata->time_running << " / " << pdata->time_enabled
+                  << "\n";
+
+        for (int count_i = 0; count_i < pdata->nr; count_i++) {
+          const auto& counter_res = pdata->values[count_i];
+          const CounterId_t& counter_id = counter_res.id;
+          const CounterVal_t& counter_value = counter_res.value;
+          std::cout << "PerfCounter::read_counters " << counter_id << " "
+                    << counter_value << "\n";
+
+          //
+          auto& counter = counters_.at(counter_id);
+          counter.c_val = counter_value;
+          // res.push_back(counter);
+        }
+      }
     }
   }
 
@@ -173,9 +216,10 @@ class PerfCounter {
     }
   };
 
-  void add_counter(PerfEventAttr_config_t counter_config /* counter name */,
-                   CounterName_t counter_name_s,
-                   PerfEventAttr_type_t counter_type = PERF_TYPE_HARDWARE)
+  auto add_counter(PerfEventAttr_config_t counter_config /* counter name */,
+                   const CounterName_t& counter_name_s,
+                   PerfEventAttr_type_t counter_type = PERF_TYPE_HARDWARE,
+                   std::optional<int> group_fd_opt = std::nullopt)
 
   {
     std::cout << "PerfCounter::add_counter config=" << counter_config
@@ -190,32 +234,42 @@ class PerfCounter {
     pe.size = sizeof(struct perf_event_attr);
     // pe.size     = sizeof(struct perf_event_attr);
     pe.disabled = 1;
-    // pe.exclude_kernel = 1;
-    // pe.exclude_hv = 1;
-    pe.exclude_kernel = 0;
-    pe.exclude_hv = 0;
+    pe.exclude_kernel = 1;
+    pe.exclude_hv = 1;
+    // pe.exclude_kernel = 0;
+    // pe.exclude_hv = 0;
     pe.exclude_user = 0;
 
-    pe.read_format = PERF_FORMAT_GROUP | PERF_FORMAT_ID |
-                     PERF_FORMAT_TOTAL_TIME_ENABLED |
-                     PERF_FORMAT_TOTAL_TIME_RUNNING;
+    int group_fd = -1;
+    if (group_fd_opt.has_value()) {
+      if (*group_fd_opt != -1 &&
+          counter_groups_.find(*group_fd_opt) == counter_groups_.end()) {
+        throw std::runtime_error(
+            "PerfCounter::add_counter given group fd has not been created");
+      }
+
+      pe.read_format = PERF_FORMAT_GROUP | basic_read_format;
+      group_fd = *group_fd_opt;
+    } else {
+      pe.read_format = basic_read_format;
+    }
 
     CounterFD_t new_counter_fd = perf_event_open(&pe, pid_, cpu_, group_fd, 0);
     if (new_counter_fd == -1) {
-      std::cerr << "PerfCounter::perf_event_open error opening leader "
-                << std::hex << pe.config << std::dec << errno
-                << std::strerror(errno) << "\n";
+      std::cerr << "PerfCounter::add_counter perf_event_open error " << std::hex
+                << pe.config << std::dec << errno << std::strerror(errno)
+                << "\n";
       exit(EXIT_FAILURE);
     }
     counters_fds.push_back(new_counter_fd);
 
-    // if it is a brand new group:
-    if (group_fd == -1) {
-      group_fd = new_counter_fd;
-    }
-
     CounterId_t new_id{};
     ioctl(new_counter_fd, PERF_EVENT_IOC_ID, &new_id);
+
+    if (counters_.find(new_id) != counters_.end()) {
+      throw std::runtime_error(
+          "PerfCounter::add_counter somehow got a used id");
+    }
 
     // counter_ids.push_back(new_id);
     // counter_types.push_back(counter_type);
@@ -225,30 +279,72 @@ class PerfCounter {
                          .c_name = counter_name_s,
                          .c_config = counter_config,
                          .c_type = counter_type};
+
+    if (group_fd == -1) {
+      counter_groups_[new_counter_fd] = {new_id};
+    }
+
+    else {
+      counter_groups_.at(group_fd).push_back(new_id);
+    }
+
+    return new_counter_fd;
   }
 
-  void add_counter(CounterName_t known_event_s) {
+  CounterFD_t add_counter(const CounterName_t& known_event_s,
+                          std::optional<int> group_fd = std::nullopt) {
     if (known_events_map.find(known_event_s) == known_events_map.end()) {
       std::cerr << "PerfCounter::add_counter could not find " << known_event_s
                 << " in known events\n";
-      return;
+
+      throw std::runtime_error("PerfCounter::add_counter could not find " +
+                               known_event_s + " in known events");
+
+      return -1;
+    }
+
+    if (group_fd.has_value()) {
+      std::cerr << "PerfCounter::add_counter adding event " << known_event_s
+                << " from known events to group " << *group_fd << "\n";
+    }
+
+    else {
+      std::cerr << "PerfCounter::add_counter adding a single event "
+                << known_event_s << "\n";
     }
 
     auto event_desc = known_events_map.at(known_event_s);
-    add_counter(event_desc.perf_config, known_event_s, event_desc.perf_type);
+    auto new_counter_fd = add_counter(event_desc.perf_config, known_event_s,
+                                      event_desc.perf_type, group_fd);
+    return new_counter_fd;
+  }
+
+  CounterFD_t add_group(const std::vector<CounterName_t>& names) {
+    std::cerr << "PerfCounter::add_counter adding a group of " << names.size()
+              << " events\n";
+    auto group_fd = add_counter(
+        names.at(0),
+        {-1});  // first counter in the group has to have group fd -1
+    for (size_t ind = 1; ind < names.size(); ++ind) {
+      auto new_fd = add_counter(names[ind], {group_fd});
+    }
+    return group_fd;
   }
 
   void start_count(void) {
-    if (group_fd == -1) {
-      throw std::runtime_error(
-          "PerfCounter::start_count called without counters");
+    for (const auto& [group_fd, cids] : counter_groups_) {
+      if (cids.size() > 1) {
+        ioctl(group_fd, PERF_EVENT_IOC_RESET, PERF_IOC_FLAG_GROUP);
+        ioctl(group_fd, PERF_EVENT_IOC_ENABLE, PERF_IOC_FLAG_GROUP);
+      }
+
+      else {
+        // this enables only the very first event:
+        ioctl(group_fd, PERF_EVENT_IOC_RESET, 0);
+        ioctl(group_fd, PERF_EVENT_IOC_ENABLE, 0);
+      }
     }
 
-    ioctl(group_fd, PERF_EVENT_IOC_RESET, PERF_IOC_FLAG_GROUP);
-    ioctl(group_fd, PERF_EVENT_IOC_ENABLE, PERF_IOC_FLAG_GROUP);
-    // this enables only the very first event:
-    // ioctl(group_fd, PERF_EVENT_IOC_RESET, 0);
-    // ioctl(group_fd, PERF_EVENT_IOC_ENABLE, 0);
     counter_is_running = true;
   }
 
@@ -257,8 +353,17 @@ class PerfCounter {
       return;
     }
 
-    ioctl(group_fd, PERF_EVENT_IOC_DISABLE, PERF_IOC_FLAG_GROUP);
-    // ioctl(group_fd, PERF_EVENT_IOC_DISABLE, 0);
+    for (const auto& [group_fd, cids] : counter_groups_) {
+      if (cids.size() > 1) {
+        ioctl(group_fd, PERF_EVENT_IOC_DISABLE, PERF_IOC_FLAG_GROUP);
+      }
+
+      else {
+        // this enables only the very first event:
+        ioctl(group_fd, PERF_EVENT_IOC_DISABLE, 0);
+      }
+    }
+
     counter_is_running = false;
   }
 
