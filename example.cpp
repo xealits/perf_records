@@ -36,10 +36,10 @@ int main() {
   // count1.add_counter("PERF_COUNT_HW_CPU_CYCLES");
   count1.add_counter("cpu-cycles");
   count1.add_counter("cache-references");
-  //count1.add_counter("cache-misses");
+  // count1.add_counter("cache-misses");
 
-  //count1.add_group(
-  //    {"topdown-fe-bound", "topdown-retiring"});
+  // count1.add_group(
+  //     {"topdown-fe-bound", "topdown-retiring"});
   count1.add_group(
       {"topdown-fe-bound", "topdown-be-bound", "topdown-retiring"});
   // count1.add_counter("PERF_COUNT_HW_STALLED_CYCLES_BACKEND");

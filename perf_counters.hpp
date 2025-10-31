@@ -58,13 +58,6 @@ static std::map<CounterName_t, PerfEventDesc> known_events_map = {
      {.perf_config = RawEventConfig(0x2e, 0x41), .perf_type = PERF_TYPE_RAW}},
 };
 
-//! \brief a string for column names, counter names, nicknames etc
-struct ShortString {
-  char data_[64];
-  static constexpr unsigned data_size_ = sizeof(data_) / sizeof(data_[0]);
-  operator std::string(void) const { return std::string(data_); }
-};
-
 class PerfCounter {
  public:
   using CounterFD_t = decltype(syscall(__NR_perf_event_open, 0, 0, 0, -1, 0));
