@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <linux/perf_event.h>
 #include <sys/ioctl.h>
+#include <unistd.h>  // pid_t gettid(void)
 
 #include <cstring>
 // #include <linux/hw_breakpoint.h>
@@ -79,6 +80,12 @@ class PerfCounter {
     PerfEventAttr_type_t c_type{};
   };
 
+  struct AllCountersData {
+    pid_t pid{0};
+    int cpu{-1};
+    std::map<CounterId_t, CounterDesc> counters;
+  };
+
  private:
   bool counter_is_running{false};
   int group_fd{-1};  // this fd will be the counter group fd
@@ -118,8 +125,43 @@ class PerfCounter {
     return ret;
   }
 
+  void read_counters(void) {
+    std::vector<CounterDesc> res;
+    stop_count();
+
+    read(group_fd, &(buf[0]), sizeof(buf));
+    struct read_format* pdata = reinterpret_cast<struct read_format*>(buf);
+
+    if ((sizeof(pdata->nr) + pdata->nr * sizeof(pdata->values[0])) >
+        sizeof(buf)) {
+      throw std::runtime_error(
+          "PerfCounter::read_counters got more data than the internal buffer");
+    }
+
+    std::cout << "PerfCounter::read_counters group ran as " << std::dec
+              << pdata->time_running << " / " << pdata->time_enabled << "\n";
+
+    for (int count_i = 0; count_i < pdata->nr; count_i++) {
+      const auto& counter_res = pdata->values[count_i];
+      const CounterId_t& counter_id = counter_res.id;
+      const CounterVal_t& counter_value = counter_res.value;
+      std::cout << "PerfCounter::read_counters " << counter_id << " "
+                << counter_value << "\n";
+
+      //
+      auto& counter = counters_.at(counter_id);
+      counter.c_val = counter_value;
+      // res.push_back(counter);
+    }
+  }
+
  public:
-  PerfCounter(void) = default;  // no other constructors
+  PerfCounter(void) : pid_{gettid()} {
+    std::cerr << "PerfCounter constructed for tid " << pid_ << "\n";
+  };
+  PerfCounter(pid_t pid) : pid_{pid} {
+    std::cerr << "PerfCounter constructed for given tid " << pid_ << "\n";
+  };
   PerfCounter(const PerfCounter& ref) = delete;
   PerfCounter(PerfCounter&& ref) = delete;
   PerfCounter& operator=(const PerfCounter&) = delete;
@@ -220,35 +262,9 @@ class PerfCounter {
     counter_is_running = false;
   }
 
-  std::vector<CounterDesc> read_counters(void) {
-    std::vector<CounterDesc> res;
-    stop_count();
-
-    read(group_fd, &(buf[0]), sizeof(buf));
-    struct read_format* pdata = reinterpret_cast<struct read_format*>(buf);
-
-    if ((sizeof(pdata->nr) + pdata->nr * sizeof(pdata->values[0])) >
-        sizeof(buf)) {
-      throw std::runtime_error(
-          "PerfCounter::read_counters got more data than the internal buffer");
-    }
-
-    std::cout << "PerfCounter::read_counters group ran as " << std::dec
-              << pdata->time_running << " / " << pdata->time_enabled << "\n";
-
-    for (int count_i = 0; count_i < pdata->nr; count_i++) {
-      const auto& counter_res = pdata->values[count_i];
-      const CounterId_t& counter_id = counter_res.id;
-      const CounterVal_t& counter_value = counter_res.value;
-      std::cout << "PerfCounter::read_counters " << counter_id << " "
-                << counter_value << "\n";
-
-      //
-      auto counter = counters_.at(counter_id);
-      counter.c_val = counter_value;
-      res.push_back(counter);
-    }
-
-    return res;
+  // return data to the user
+  AllCountersData get_data(void) {
+    read_counters();
+    return {.pid = pid_, .cpu = cpu_, .counters = counters_};
   }
 };
