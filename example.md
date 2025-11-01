@@ -23,6 +23,9 @@ And looking at (not really) its code:
 .LVL3:
   .loc 1 17 12 view .LVU10
   .p2align 6
+
+; kudos GitHub does highlight assembly syntax
+
 .L6:
 .LVL4:
 .LBB4:
