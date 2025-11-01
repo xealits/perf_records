@@ -67,7 +67,9 @@ int main() {
 
   auto res = count1.get_data();
   auto bench = translate_perf_counters("testing X", res);
-  std::cout << bench << "\n";
+  std::cout << bench << "\n\n";
+
+  std::cout << bench.html() << "\n";
 
   return 0;
 }

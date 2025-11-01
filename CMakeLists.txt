@@ -21,4 +21,3 @@ target_include_directories(records INTERFACE ${PROJECT_SOURCE_DIR}/)
 
 add_executable(example example.cpp)
 target_link_libraries(example PRIVATE perf_counters records)
-
