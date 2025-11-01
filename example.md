@@ -50,50 +50,57 @@ And looking at (not really) its code:
 
 Metrics with a basic config:
 
+<div class="perf_records">
 <details>
   <summary>
-  testing X <data>NA</data>
+  <var>testing X</var> <data>NA</data>
   </summary>
+  <div class="perf_subrecs">
     <summary>
-    cpu-cycles <data>29309</data>
+    <var>cpu-cycles</var> <data>17006</data>
     </summary>
     <summary>
-    cache-references <data>637</data>
+    <var>cache-references</var> <data>517</data>
     </summary>
     <summary>
-    topdown-fe-bound <data>76191</data>
+    <var>topdown-fe-bound</var> <data>40401</data>
     </summary>
     <summary>
-    topdown-be-bound <data>17888</data>
+    <var>topdown-be-bound</var> <data>8386</data>
     </summary>
     <summary>
-    topdown-retiring <data>5786</data>
+    <var>topdown-retiring</var> <data>5786</data>
     </summary>
+  </div>
 </details>
-
+</div>
 
 Then let's change the config and try this:
 
+<div class="perf_records">
 <details>
   <summary>
-  testing X <data>NA</data>
+  <var>testing X</var> <data>NA</data>
   </summary>
+  <div class="perf_subrecs">
     <summary>
-    cpu-cycles <data>15874</data>
+    <var>cpu-cycles</var> <data>20047</data>
     </summary>
     <summary>
-    cache-references <data>442</data>
+    <var>cache-references</var> <data>438</data>
     </summary>
     <summary>
-    topdown-fe-bound <data>37937</data>
+    <var>topdown-fe-bound</var> <data>47276</data>
     </summary>
     <summary>
-    topdown-be-bound <data>7441</data>
+    <var>topdown-be-bound</var> <data>10518</data>
     </summary>
     <summary>
-    topdown-retiring <data>5786</data>
+    <var>topdown-retiring</var> <data>5786</data>
     </summary>
+  </div>
 </details>
+</div>
 
 And add more text.
 
@@ -102,6 +109,26 @@ When does HTML get the `<p>` back?
 
 # Render HTML with Pandoc
 
+Add the `--from` option to make Pandoc correctly treat custom tags as
+not a part of markdown:
 ```bash
-$ pandoc --standalone example.md  > example.html
+$ pandoc --from markdown-markdown_in_html_blocks+raw_html \
+    --standalone example.md  > example.html
+```
+
+HTML can be parsed on its own:
+```Python
+from bs4 import BeautifulSoup
+>>> from bs4 import BeautifulSoup
+>>> with open("example.html", 'r') as f:
+...     example_s = f.read()
+...     
+>>> 
+>>> soup = BeautifulSoup(example_s, 'html.parser')
+>>> soup.select(".perf_records")[0].select("summary")[0]
+<summary>
+<var>testing X</var> <data>NA</data>
+</summary>
+>>> soup.select(".perf_records")[0].find("summary").find("var").get_text(strip=True)
+'testing X'
 ```

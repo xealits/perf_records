@@ -41,21 +41,29 @@ struct Record {
     std::string res;
     auto lev_payload = subrecs.size() > 0 ? lev+1 : lev;
 
+    // let's mark the top node to always be able to scrap it
+    if (lev == 0) res += "<div class=\"perf_records\">\n";
+
     // let's just dump it as a tree
     if (subrecs.size() > 0) {
       res += ind(lev) + "<details>\n";
     }
 
     res += ind(lev_payload) + "<summary>\n";
-    res += ind(lev_payload) + column_name + " <data>" + value_s() + "</data>\n";
+    res += ind(lev_payload) + "<var>" + column_name + "</var>" + " <data>" + value_s() + "</data>\n";
     res += ind(lev_payload) + "</summary>\n";
 
     // nest further
-    for (const auto& subr : subrecs) {
-      res += subr.html(lev_payload+1);
+    if (subrecs.size() > 0) {
+      res += ind(lev_payload) + "<div class=\"perf_records_nest\">\n";
+      for (const auto& subr : subrecs) {
+        res += subr.html(lev_payload+1);
+      }
+      res += ind(lev_payload) + "</div>\n";
     }
 
     if (subrecs.size() > 0) res += ind(lev) + "</details>\n";
+    if (lev == 0) res += "</div>\n";
     return res;
   }
 };
