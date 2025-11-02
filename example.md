@@ -56,24 +56,24 @@ Metrics with a basic config:
 <div class="perf_records">
 <details>
   <summary>
-  <var>testing X</var> <data>NA</data>
+  <var>analysisID <data>1</data></var>
+  <div class="perf_records_conditions">
+  <var>n_thr <data>2</data></var>
+  </div>
   </summary>
-  <div class="perf_subrecs">
-    <summary>
-    <var>cpu-cycles</var> <data>17006</data>
-    </summary>
-    <summary>
-    <var>cache-references</var> <data>517</data>
-    </summary>
-    <summary>
-    <var>topdown-fe-bound</var> <data>40401</data>
-    </summary>
-    <summary>
-    <var>topdown-be-bound</var> <data>8386</data>
-    </summary>
-    <summary>
-    <var>topdown-retiring</var> <data>5786</data>
-    </summary>
+  <div class="perf_records_nest">
+    <details>
+      <summary>
+      <var>thrMain <data>NA</data></var>
+      </summary>
+      <div class="perf_records_nest">
+        <var>cpu-cycles <data>17622</data></var>
+        <var>cache-references <data>512</data></var>
+        <var>topdown-fe-bound <data>40872</data></var>
+        <var>topdown-be-bound <data>9065</data></var>
+        <var>topdown-retiring <data>5786</data></var>
+      </div>
+    </details>
   </div>
 </details>
 </div>
@@ -83,24 +83,24 @@ Then let's change the config and try this:
 <div class="perf_records">
 <details>
   <summary>
-  <var>testing X</var> <data>NA</data>
+  <var>analysisID <data>1</data></var>
+  <div class="perf_records_conditions">
+  <var>n_thr <data>2</data></var>
+  </div>
   </summary>
-  <div class="perf_subrecs">
-    <summary>
-    <var>cpu-cycles</var> <data>20047</data>
-    </summary>
-    <summary>
-    <var>cache-references</var> <data>438</data>
-    </summary>
-    <summary>
-    <var>topdown-fe-bound</var> <data>47276</data>
-    </summary>
-    <summary>
-    <var>topdown-be-bound</var> <data>10518</data>
-    </summary>
-    <summary>
-    <var>topdown-retiring</var> <data>5786</data>
-    </summary>
+  <div class="perf_records_nest">
+    <details>
+      <summary>
+      <var>thrMain <data>NA</data></var>
+      </summary>
+      <div class="perf_records_nest">
+        <var>cpu-cycles <data>18899</data></var>
+        <var>cache-references <data>535</data></var>
+        <var>topdown-fe-bound <data>45006</data></var>
+        <var>topdown-be-bound <data>6723</data></var>
+        <var>topdown-retiring <data>5786</data></var>
+      </div>
+    </details>
   </div>
 </details>
 </div>
@@ -121,7 +121,6 @@ $ pandoc --from markdown-markdown_in_html_blocks+raw_html \
 
 HTML can be parsed on its own:
 ```Python
-from bs4 import BeautifulSoup
 >>> from bs4 import BeautifulSoup
 >>> with open("example.html", 'r') as f:
 ...     example_s = f.read()
@@ -134,4 +133,13 @@ from bs4 import BeautifulSoup
 </summary>
 >>> soup.select(".perf_records")[0].find("summary").find("var").get_text(strip=True)
 'testing X'
+```
+
+And parse it to CSV:
+```bash
+$ python log_to_csv.py example.html 
+$ cat example.csv 
+thrMain.topdown-be-bound,thrMain,thrMain.cache-references,thrMain.topdown-retiring,n_thr,thrMain.cpu-cycles,thrMain.topdown-fe-bound
+9065,NA,512,5786,2,17622,40872
+6723,NA,535,5786,2,18899,45006
 ```

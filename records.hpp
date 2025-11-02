@@ -21,6 +21,7 @@ struct Record {
   int cpu{-1};
 
   std::optional<ValT> value = std::nullopt;
+  std::vector<Record<ValT>> conditions;
   std::vector<Record<ValT>> subrecs;
 
 
@@ -47,22 +48,33 @@ struct Record {
     // let's just dump it as a tree
     if (subrecs.size() > 0) {
       res += ind(lev) + "<details>\n";
+      // details always has summary
+      res += ind(lev_payload) + "<summary>\n";
     }
 
-    res += ind(lev_payload) + "<summary>\n";
-    res += ind(lev_payload) + "<var>" + column_name + "</var>" + " <data>" + value_s() + "</data>\n";
-    res += ind(lev_payload) + "</summary>\n";
+    // record payload data:
+    // the value in var
+    // and a dump of condition records - vars or details-summary
+    res += ind(lev_payload) + "<var>" + column_name + " <data>" + value_s() + "</data>" + "</var>\n";
+    if (conditions.size() > 0) {
+      res += ind(lev_payload) + "<div class=\"perf_records_conditions\">\n";
+      for (const auto& cond : conditions) {
+        res += cond.html(lev_payload);
+      }
+      res += ind(lev_payload) + "</div>\n";
+    }
 
     // nest further
     if (subrecs.size() > 0) {
+      res += ind(lev_payload) + "</summary>\n";
       res += ind(lev_payload) + "<div class=\"perf_records_nest\">\n";
       for (const auto& subr : subrecs) {
         res += subr.html(lev_payload+1);
       }
       res += ind(lev_payload) + "</div>\n";
+      res += ind(lev) + "</details>\n";
     }
 
-    if (subrecs.size() > 0) res += ind(lev) + "</details>\n";
     if (lev == 0) res += "</div>\n";
     return res;
   }

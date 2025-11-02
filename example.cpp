@@ -56,7 +56,7 @@ int main() {
     count_th.stop_count();
 
     auto res = count_th.get_data();
-    auto bench = translate_perf_counters("testing thread", res);
+    auto bench = translate_perf_counters("thr1", res);
     std::cout << bench << "\n";
   });
   thr.join();
@@ -66,10 +66,15 @@ int main() {
   count1.stop_count();
 
   auto res = count1.get_data();
-  auto bench = translate_perf_counters("testing X", res);
+  auto bench = translate_perf_counters("thrMain", res);
   std::cout << bench << "\n\n";
 
-  std::cout << bench.html() << "\n";
+  decltype(bench) analysis_bench("analysisID");
+  analysis_bench.value = 1;
+  analysis_bench.subrecs.push_back(bench);
+  analysis_bench.conditions.push_back({.column_name = "n_thr", .value = 2});
+
+  std::cout << analysis_bench.html() << "\n";
 
   return 0;
 }
