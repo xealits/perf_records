@@ -238,9 +238,11 @@ HTML can be parsed on its own:
 
 And parse it to CSV:
 ```bash
-$ python log_to_csv.py example.html 
-$ cat example.csv 
-thrMain.topdown-be-bound,thrMain,thrMain.cache-references,thrMain.topdown-retiring,n_thr,thrMain.cpu-cycles,thrMain.topdown-fe-bound
-9065,NA,512,5786,2,17622,40872
-6723,NA,535,5786,2,18899,45006
+$ python log_to_csv.py log_example.html
+$ cat log_example.csv
+thr1.topdown-retiring,thr1.cpu-cycles,thr1,thr1.topdown-fe-bound,thrMain,n_thr,thrMain.topdown-retiring,app_count,thrMain.cpu-cycles,thrMain.cache-references,thrMain.topdown-be-bound,thrMain.topdown-fe-bound,instr
+14286,45055,NA,111043,NA,2,5786,,16953,441,8375,44681,
+14318,44505,NA,109718,NA,2,6253,5,18522,458,11895,47260,
+14318,45382,NA,109630,NA,2,5803,5,16758,453,8544,44161,1
+14318,46176,NA,114118,NA,2,5803,5,14227,437,7669,35027,1
 ```
