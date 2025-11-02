@@ -1,8 +1,8 @@
 #include <unistd.h>
 
+#include <optional>
 #include <string>
 #include <vector>
-#include <optional>
 
 using RecordString_t = std::string;
 
@@ -24,7 +24,6 @@ struct Record {
   std::vector<Record<ValT>> conditions;
   std::vector<Record<ValT>> subrecs;
 
-
   std::string value_s(void) const {
     return value ? std::to_string(*value) : "NA";
   }
@@ -40,7 +39,7 @@ struct Record {
 
   std::string html(unsigned lev = 0) const {
     std::string res;
-    auto lev_payload = subrecs.size() > 0 ? lev+1 : lev;
+    auto lev_payload = subrecs.size() > 0 ? lev + 1 : lev;
 
     // let's mark the top node to always be able to scrap it
     if (lev == 0) res += "<div class=\"perf_records\">\n";
@@ -55,7 +54,8 @@ struct Record {
     // record payload data:
     // the value in var
     // and a dump of condition records - vars or details-summary
-    res += ind(lev_payload) + "<var>" + column_name + " <data>" + value_s() + "</data>" + "</var>\n";
+    res += ind(lev_payload) + "<var>" + column_name + " <data>" + value_s() +
+           "</data>" + "</var>\n";
     if (conditions.size() > 0) {
       res += ind(lev_payload) + "<div class=\"perf_records_conditions\">\n";
       for (const auto& cond : conditions) {
@@ -69,7 +69,7 @@ struct Record {
       res += ind(lev_payload) + "</summary>\n";
       res += ind(lev_payload) + "<div class=\"perf_records_nest\">\n";
       for (const auto& subr : subrecs) {
-        res += subr.html(lev_payload+1);
+        res += subr.html(lev_payload + 1);
       }
       res += ind(lev_payload) + "</div>\n";
       res += ind(lev) + "</details>\n";
