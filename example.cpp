@@ -44,7 +44,8 @@ int main() {
       {"topdown-fe-bound", "topdown-be-bound", "topdown-retiring"});
   // count1.add_counter("PERF_COUNT_HW_STALLED_CYCLES_BACKEND");
 
-  auto thr = std::thread([](void) {
+  decltype(translate_perf_counters("n", PerfCounter{}.get_data())) bench_th;
+  auto thr = std::thread([&bench_th](void) {
     PerfCounter count_th{};
     count_th.add_counter("cpu-cycles");
     count_th.add_counter("topdown-fe-bound");
@@ -56,10 +57,10 @@ int main() {
     count_th.stop_count();
 
     auto res = count_th.get_data();
-    auto bench = translate_perf_counters("thr1", res);
-    std::cout << bench << "\n";
+    bench_th = translate_perf_counters("thr1", res);
   });
   thr.join();
+  std::cout << bench_th << "\n";
 
   count1.start_count();
   code_under_test();
@@ -71,8 +72,9 @@ int main() {
 
   decltype(bench) analysis_bench("analysisID");
   analysis_bench.value = 1;
-  analysis_bench.subrecs.push_back(bench);
   analysis_bench.conditions.push_back({.column_name = "n_thr", .value = 2});
+  analysis_bench.subrecs.push_back(bench);
+  analysis_bench.subrecs.push_back(bench_th);
 
   std::cout << analysis_bench.html() << "\n";
 

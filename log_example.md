@@ -67,11 +67,21 @@ Metrics with a basic config:
       <var>thrMain <data>NA</data></var>
       </summary>
       <div class="perf_records_nest">
-        <var>cpu-cycles <data>17622</data></var>
-        <var>cache-references <data>512</data></var>
-        <var>topdown-fe-bound <data>40872</data></var>
-        <var>topdown-be-bound <data>9065</data></var>
+        <var>cpu-cycles <data>14687</data></var>
+        <var>cache-references <data>445</data></var>
+        <var>topdown-fe-bound <data>35091</data></var>
+        <var>topdown-be-bound <data>8148</data></var>
         <var>topdown-retiring <data>5786</data></var>
+      </div>
+    </details>
+    <details>
+      <summary>
+      <var>thr1 <data>NA</data></var>
+      </summary>
+      <div class="perf_records_nest">
+        <var>cpu-cycles <data>46510</data></var>
+        <var>topdown-fe-bound <data>113597</data></var>
+        <var>topdown-retiring <data>14511</data></var>
       </div>
     </details>
   </div>
@@ -94,11 +104,58 @@ Then let's change the config and try this:
       <var>thrMain <data>NA</data></var>
       </summary>
       <div class="perf_records_nest">
-        <var>cpu-cycles <data>18899</data></var>
-        <var>cache-references <data>535</data></var>
-        <var>topdown-fe-bound <data>45006</data></var>
-        <var>topdown-be-bound <data>6723</data></var>
+        <var>cpu-cycles <data>16953</data></var>
+        <var>cache-references <data>441</data></var>
+        <var>topdown-fe-bound <data>44681</data></var>
+        <var>topdown-be-bound <data>8375</data></var>
         <var>topdown-retiring <data>5786</data></var>
+      </div>
+    </details>
+    <details>
+      <summary>
+      <var>thr1 <data>NA</data></var>
+      </summary>
+      <div class="perf_records_nest">
+        <var>cpu-cycles <data>45055</data></var>
+        <var>topdown-fe-bound <data>111043</data></var>
+        <var>topdown-retiring <data>14286</data></var>
+      </div>
+    </details>
+  </div>
+</details>
+</div>
+
+Some outlier:
+
+<div class="perf_records">
+<details>
+  <summary>
+  <var>analysisID <data>1</data></var>
+  <div class="perf_records_conditions">
+  <var>n_thr <data>2</data></var>
+  </div>
+  </summary>
+  <div class="perf_records_nest">
+    <details>
+      <summary>
+      <var>thrMain <data>NA</data></var>
+      </summary>
+      <div class="perf_records_nest">
+        <var>cpu-cycles <data>16687</data></var>
+        <var>cache-references <data>484</data></var>
+        <var>topdown-fe-bound <data>42277</data></var>
+        <var>topdown-be-bound <data>11369</data></var>
+        <var>topdown-retiring <data>6007</data></var>
+      </div>
+    </details>
+    <details>
+      <summary>
+      <var>thr1 <data>NA</data></var>
+      </summary>
+      <div class="perf_records_nest">
+        <var>cpu-cycles <data>45994</data></var>
+        <var>topdown-fe-bound <data>111582</data></var>
+        <var>topdown-retiring <data>14286</data></var>
       </div>
     </details>
   </div>
