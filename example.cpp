@@ -5,13 +5,21 @@
 #include "perf_counters.hpp"
 #include "records.hpp"
 
-void code_under_test(void) {
+struct AppStats {
+  unsigned long long counter{0};
+};
+
+auto code_under_test(void) {
+  AppStats stats;
   for (unsigned ind = 0; ind < 5; ind++) {
     std::cout << ind << '\n';
+    stats.counter++;
   }
 
   using namespace std::chrono_literals;
   std::this_thread::sleep_for(2s);
+
+  return stats;
 }
 
 Record<PerfCounter::CounterVal_t> translate_perf_record(
@@ -63,7 +71,7 @@ int main() {
   std::cout << bench_th << "\n";
 
   count1.start_count();
-  code_under_test();
+  auto stats_main = code_under_test();
   count1.stop_count();
 
   auto res = count1.get_data();
@@ -73,6 +81,9 @@ int main() {
   decltype(bench) analysis_bench("analysisID");
   analysis_bench.value = 1;
   analysis_bench.conditions.push_back({.column_name = "n_thr", .value = 2});
+  analysis_bench.conditions.push_back({.column_name = "instr", .value = 1});
+  analysis_bench.subrecs.push_back(
+      {.column_name = "app_count", .value = stats_main.counter});
   analysis_bench.subrecs.push_back(bench);
   analysis_bench.subrecs.push_back(bench_th);
 
