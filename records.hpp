@@ -54,8 +54,12 @@ struct Record {
     // record payload data:
     // the value in var
     // and a dump of condition records - vars or details-summary
-    res += ind(lev_payload) + "<var>" + column_name + " <data>" + value_s() +
-           "</data>" + "</var>\n";
+    // use attribute for the var name, to easily select nodes in parsing:
+    // soup.select_one("var[data-name=analysisID] > data").contents
+    res += ind(lev_payload)
+      + "<var class=\"perf_records_parameter\" data-name=\"" + column_name + "\">"
+      + "<data>" + value_s() + "</data>"
+      + "</var>\n";
     if (conditions.size() > 0) {
       res += ind(lev_payload) + "<div class=\"perf_records_conditions\">\n";
       for (const auto& cond : conditions) {

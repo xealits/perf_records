@@ -21,13 +21,17 @@ soup.select(".perf_records")[0].find("summary").find("var").get_text(strip=True)
 def direct_text(soup_elem):
     return ''.join([x for x in soup_elem.contents if isinstance(x, str)])
 
-def parse_param(param):
-    var_name = direct_text(param).strip()
-    data = param.find("data")
-    if data is None:
-        var_data = "NA"
+def direct_text_default(soup_elem, default = "NA"):
+    if soup_elem is None:
+        return default
     else:
-        var_data = direct_text(data).strip()
+        return direct_text(soup_elem).strip()
+
+def parse_param(param):
+    # var_name = direct_text(param.find("dfn"))
+    var_name = param.get("data-name")
+    assert var_name is not None, f"no data-name in record var param {param}"
+    var_data = direct_text_default(param.find("data"))
     return var_name, {"value": var_data}
 
 def parse_record(record_soup):
