@@ -3,6 +3,13 @@ title: A study a log
 date: November 1, 2025
 ---
 
+<style>
+  var.perf_records_parameter::before {
+    content: attr(data-name) ": ";
+    font-size: 0.7em;
+  }
+</style>
+
 Some log testing this code
 ```cpp
 
@@ -56,32 +63,32 @@ Metrics with a basic config without the app counter:
 <div class="perf_records">
 <details>
   <summary>
-  <var>analysisID <data>1</data></var>
+  <var class="perf_records_parameter" data-name="analysisID"><data>1</data></var>
   <div class="perf_records_conditions">
-  <var>n_thr <data>2</data></var>
+  <var class="perf_records_parameter" data-name="n_thr"><data>2</data></var>
   </div>
   </summary>
   <div class="perf_records_nest">
     <details>
       <summary>
-      <var>thrMain <data>NA</data></var>
+      <var class="perf_records_parameter" data-name="thrMain"><data>NA</data></var>
       </summary>
       <div class="perf_records_nest">
-        <var>cpu-cycles <data>16953</data></var>
-        <var>cache-references <data>441</data></var>
-        <var>topdown-fe-bound <data>44681</data></var>
-        <var>topdown-be-bound <data>8375</data></var>
-        <var>topdown-retiring <data>5786</data></var>
+        <var class="perf_records_parameter" data-name="cpu-cycles"><data>17388</data></var>
+        <var class="perf_records_parameter" data-name="cache-references"><data>467</data></var>
+        <var class="perf_records_parameter" data-name="topdown-fe-bound"><data>45176</data></var>
+        <var class="perf_records_parameter" data-name="topdown-be-bound"><data>7289</data></var>
+        <var class="perf_records_parameter" data-name="topdown-retiring"><data>5788</data></var>
       </div>
     </details>
     <details>
       <summary>
-      <var>thr1 <data>NA</data></var>
+      <var class="perf_records_parameter" data-name="thr1"><data>NA</data></var>
       </summary>
       <div class="perf_records_nest">
-        <var>cpu-cycles <data>45055</data></var>
-        <var>topdown-fe-bound <data>111043</data></var>
-        <var>topdown-retiring <data>14286</data></var>
+        <var class="perf_records_parameter" data-name="cpu-cycles"><data>43535</data></var>
+        <var class="perf_records_parameter" data-name="topdown-fe-bound"><data>102301</data></var>
+        <var class="perf_records_parameter" data-name="topdown-retiring"><data>14288</data></var>
       </div>
     </details>
   </div>
@@ -93,33 +100,33 @@ Some outlier:
 <div class="perf_records">
 <details>
   <summary>
-  <var>analysisID <data>1</data></var>
+  <var class="perf_records_parameter" data-name="analysisID"><data>1</data></var>
   <div class="perf_records_conditions">
-  <var>n_thr <data>2</data></var>
+  <var class="perf_records_parameter" data-name="n_thr"><data>2</data></var>
+  <var class="perf_records_parameter" data-name="instr"><data>0</data></var>
   </div>
   </summary>
   <div class="perf_records_nest">
     <details>
       <summary>
-      <var>thrMain <data>NA</data></var>
+      <var class="perf_records_parameter" data-name="thrMain"><data>NA</data></var>
       </summary>
       <div class="perf_records_nest">
-        <var>cpu-cycles <data>18522</data></var>
-        <var>cache-references <data>458</data></var>
-        <var>topdown-fe-bound <data>47260</data></var>
-        <var>topdown-be-bound <data>11895</data></var>
-        <var>topdown-retiring <data>6253</data></var>
+        <var class="perf_records_parameter" data-name="cpu-cycles"><data>14134</data></var>
+        <var class="perf_records_parameter" data-name="cache-references"><data>444</data></var>
+        <var class="perf_records_parameter" data-name="topdown-fe-bound"><data>34446</data></var>
+        <var class="perf_records_parameter" data-name="topdown-be-bound"><data>7746</data></var>
+        <var class="perf_records_parameter" data-name="topdown-retiring"><data>6253</data></var>
       </div>
     </details>
-    <var>app_count <data>5</data></var>
     <details>
       <summary>
-      <var>thr1 <data>NA</data></var>
+      <var class="perf_records_parameter" data-name="thr1"><data>NA</data></var>
       </summary>
       <div class="perf_records_nest">
-        <var>cpu-cycles <data>44505</data></var>
-        <var>topdown-fe-bound <data>109718</data></var>
-        <var>topdown-retiring <data>14318</data></var>
+        <var class="perf_records_parameter" data-name="cpu-cycles"><data>46825</data></var>
+        <var class="perf_records_parameter" data-name="topdown-fe-bound"><data>116091</data></var>
+        <var class="perf_records_parameter" data-name="topdown-retiring"><data>14513</data></var>
       </div>
     </details>
   </div>
@@ -133,34 +140,34 @@ Metrics with a basic config with the app counter (more `retiring`):
 <div class="perf_records">
 <details>
   <summary>
-  <var>analysisID <data>1</data></var>
+  <var class="perf_records_parameter" data-name="analysisID"><data>1</data></var>
   <div class="perf_records_conditions">
-  <var>n_thr <data>2</data></var>
-  <var>instr <data>1</data></var>
+  <var class="perf_records_parameter" data-name="n_thr"><data>2</data></var>
+  <var class="perf_records_parameter" data-name="instr"><data>1</data></var>
   </div>
   </summary>
   <div class="perf_records_nest">
-    <var>app_count <data>5</data></var>
+    <var class="perf_records_parameter" data-name="app_count"><data>5</data></var>
     <details>
       <summary>
-      <var>thrMain <data>NA</data></var>
+      <var class="perf_records_parameter" data-name="thrMain"><data>NA</data></var>
       </summary>
       <div class="perf_records_nest">
-        <var>cpu-cycles <data>16758</data></var>
-        <var>cache-references <data>453</data></var>
-        <var>topdown-fe-bound <data>44161</data></var>
-        <var>topdown-be-bound <data>8544</data></var>
-        <var>topdown-retiring <data>5803</data></var>
+        <var class="perf_records_parameter" data-name="cpu-cycles"><data>14364</data></var>
+        <var class="perf_records_parameter" data-name="cache-references"><data>452</data></var>
+        <var class="perf_records_parameter" data-name="topdown-fe-bound"><data>34453</data></var>
+        <var class="perf_records_parameter" data-name="topdown-be-bound"><data>7679</data></var>
+        <var class="perf_records_parameter" data-name="topdown-retiring"><data>5803</data></var>
       </div>
     </details>
     <details>
       <summary>
-      <var>thr1 <data>NA</data></var>
+      <var class="perf_records_parameter" data-name="thr1"><data>NA</data></var>
       </summary>
       <div class="perf_records_nest">
-        <var>cpu-cycles <data>45382</data></var>
-        <var>topdown-fe-bound <data>109630</data></var>
-        <var>topdown-retiring <data>14318</data></var>
+        <var class="perf_records_parameter" data-name="cpu-cycles"><data>45302</data></var>
+        <var class="perf_records_parameter" data-name="topdown-fe-bound"><data>111648</data></var>
+        <var class="perf_records_parameter" data-name="topdown-retiring"><data>14318</data></var>
       </div>
     </details>
   </div>
@@ -172,34 +179,34 @@ Then let's change the config and try this:
 <div class="perf_records">
 <details>
   <summary>
-  <var>analysisID <data>1</data></var>
+  <var class="perf_records_parameter" data-name="analysisID"><data>1</data></var>
   <div class="perf_records_conditions">
-  <var>n_thr <data>2</data></var>
-  <var>instr <data>1</data></var>
+  <var class="perf_records_parameter" data-name="n_thr"><data>2</data></var>
+  <var class="perf_records_parameter" data-name="instr"><data>1</data></var>
   </div>
   </summary>
   <div class="perf_records_nest">
-    <var>app_count <data>5</data></var>
+    <var class="perf_records_parameter" data-name="app_count"><data>5</data></var>
     <details>
       <summary>
-      <var>thrMain <data>NA</data></var>
+      <var class="perf_records_parameter" data-name="thrMain"><data>NA</data></var>
       </summary>
       <div class="perf_records_nest">
-        <var>cpu-cycles <data>14227</data></var>
-        <var>cache-references <data>437</data></var>
-        <var>topdown-fe-bound <data>35027</data></var>
-        <var>topdown-be-bound <data>7669</data></var>
-        <var>topdown-retiring <data>5803</data></var>
+        <var class="perf_records_parameter" data-name="cpu-cycles"><data>18647</data></var>
+        <var class="perf_records_parameter" data-name="cache-references"><data>437</data></var>
+        <var class="perf_records_parameter" data-name="topdown-fe-bound"><data>45943</data></var>
+        <var class="perf_records_parameter" data-name="topdown-be-bound"><data>12697</data></var>
+        <var class="perf_records_parameter" data-name="topdown-retiring"><data>6028</data></var>
       </div>
     </details>
     <details>
       <summary>
-      <var>thr1 <data>NA</data></var>
+      <var class="perf_records_parameter" data-name="thr1"><data>NA</data></var>
       </summary>
       <div class="perf_records_nest">
-        <var>cpu-cycles <data>46176</data></var>
-        <var>topdown-fe-bound <data>114118</data></var>
-        <var>topdown-retiring <data>14318</data></var>
+        <var class="perf_records_parameter" data-name="cpu-cycles"><data>45889</data></var>
+        <var class="perf_records_parameter" data-name="topdown-fe-bound"><data>113369</data></var>
+        <var class="perf_records_parameter" data-name="topdown-retiring"><data>14254</data></var>
       </div>
     </details>
   </div>
@@ -223,26 +230,19 @@ $ pandoc --from markdown-markdown_in_html_blocks+raw_html \
 HTML can be parsed on its own:
 ```Python
 >>> from bs4 import BeautifulSoup
->>> with open("example.html", 'r') as f:
-...     example_s = f.read()
-...     
->>> 
+>>> example_s = "..."
 >>> soup = BeautifulSoup(example_s, 'html.parser')
->>> soup.select(".perf_records")[0].select("summary")[0]
-<summary>
-<var>testing X</var> <data>NA</data>
-</summary>
->>> soup.select(".perf_records")[0].find("summary").find("var").get_text(strip=True)
-'testing X'
+>>> soup.select_one("var[data-name=analysisID] > data").contents
+['1']
 ```
 
 And parse it to CSV:
 ```bash
 $ python log_to_csv.py log_example.html
 $ cat log_example.csv
-thr1.topdown-retiring,thr1.cpu-cycles,thr1,thr1.topdown-fe-bound,thrMain,n_thr,thrMain.topdown-retiring,app_count,thrMain.cpu-cycles,thrMain.cache-references,thrMain.topdown-be-bound,thrMain.topdown-fe-bound,instr
-14286,45055,NA,111043,NA,2,5786,,16953,441,8375,44681,
-14318,44505,NA,109718,NA,2,6253,5,18522,458,11895,47260,
-14318,45382,NA,109630,NA,2,5803,5,16758,453,8544,44161,1
-14318,46176,NA,114118,NA,2,5803,5,14227,437,7669,35027,1
+thrMain.cpu-cycles,app_count,thr1.cpu-cycles,thrMain.topdown-fe-bound,thr1.topdown-fe-bound,instr,n_thr,thrMain,thrMain.cache-references,thrMain.topdown-be-bound,thrMain.topdown-retiring,thr1.topdown-retiring,thr1
+17388,,43535,45176,102301,,2,NA,467,7289,5788,14288,NA
+14134,,46825,34446,116091,0,2,NA,444,7746,6253,14513,NA
+14364,5,45302,34453,111648,1,2,NA,452,7679,5803,14318,NA
+18647,5,45889,45943,113369,1,2,NA,437,12697,6028,14254,NA
 ```
