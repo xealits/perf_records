@@ -81,9 +81,9 @@ int main() {
   decltype(bench) analysis_bench("analysisID");
   analysis_bench.value = 1;
   analysis_bench.conditions.push_back({.column_name = "n_thr", .value = 2});
-  analysis_bench.conditions.push_back({.column_name = "instr", .value = 1});
-  analysis_bench.subrecs.push_back(
-      {.column_name = "app_count", .value = stats_main.counter});
+  //analysis_bench.conditions.push_back({.column_name = "instr", .value = 1});
+  //analysis_bench.subrecs.push_back(
+      //{.column_name = "app_count", .value = stats_main.counter});
   analysis_bench.subrecs.push_back(bench);
   analysis_bench.subrecs.push_back(bench_th);
 

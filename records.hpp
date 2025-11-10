@@ -58,6 +58,7 @@ struct Record {
     // soup.select_one("var[data-name=analysisID] > data").contents
     res += ind(lev_payload)
       + "<var class=\"perf_records_parameter\" data-name=\"" + column_name + "\">"
+      + "<dfn>" + column_name + "</dfn>"
       + "<data>" + value_s() + "</data>"
       + "</var>\n";
     if (conditions.size() > 0) {
