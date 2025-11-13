@@ -29,7 +29,6 @@ constexpr PerfEventAttr_config_t RawEventConfig(unsigned event,
                                                 unsigned umask = 0) {
   // PerfEventAttr_config_t config = (event << 8) | umask;
   PerfEventAttr_config_t config = (umask << 8) | event;
-  std::cout << "RawEventConfig " << std::hex << config << "\n";
   return config;
 }
 
