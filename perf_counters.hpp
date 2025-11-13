@@ -104,7 +104,7 @@ class PerfCounter {
     struct {
       uint64_t value;
       uint64_t id;
-    } values[];
+    }* values;
   };
 
   struct read_format_single {
@@ -175,7 +175,7 @@ class PerfCounter {
                   << pdata->time_running << " / " << pdata->time_enabled
                   << "\n";
 
-        for (int count_i = 0; count_i < pdata->nr; count_i++) {
+        for (uint64_t count_i = 0; count_i < pdata->nr; count_i++) {
           const auto& counter_res = pdata->values[count_i];
           const CounterId_t& counter_id = counter_res.id;
           const CounterVal_t& counter_value = counter_res.value;
@@ -319,7 +319,7 @@ class PerfCounter {
         names.at(0),
         {-1});  // first counter in the group has to have group fd -1
     for (size_t ind = 1; ind < names.size(); ++ind) {
-      auto new_fd = add_counter(names[ind], {group_fd});
+      add_counter(names[ind], {group_fd});
     }
     return group_fd;
   }

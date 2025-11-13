@@ -21,8 +21,8 @@ struct Record {
   int cpu{-1};
 
   std::optional<ValT> value = std::nullopt;
-  std::vector<Record<ValT>> conditions;
-  std::vector<Record<ValT>> subrecs;
+  std::vector<Record<ValT>> conditions{};
+  std::vector<Record<ValT>> subrecs{};
 
   std::string value_s(void) const {
     return value ? std::to_string(*value) : "NA";
