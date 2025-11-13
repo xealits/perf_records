@@ -138,7 +138,12 @@ class PerfCounter {
     stop_count();
 
     for (const auto& [group_fd, cids] : counter_groups_) {
-      read(group_fd, &(buf[0]), sizeof(buf));
+      auto nread = read(group_fd, &(buf[0]), sizeof(buf));
+      if (nread <= 0) {
+        std::cout << "PerfCounter::read_counters read no data " << nread
+                  << " returning\n";
+        return;
+      }
 
       if (cids.size() == 1) {
         struct read_format_single* pdata =
