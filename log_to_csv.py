@@ -93,7 +93,7 @@ flat_records = list(flat_rec(rec) for rec in records)
 all_keys = set.union(*[set(d.keys()) for d in flat_records])
 
 with open(fname.with_suffix(".csv"), 'w', newline='') as csvfile:
-    fieldnames = all_keys
+    fieldnames = sorted(all_keys)
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
     writer.writeheader()
