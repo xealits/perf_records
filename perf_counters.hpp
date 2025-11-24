@@ -68,7 +68,10 @@ class PerfCounter {
     struct {
       uint64_t value;
       uint64_t id;
-    } values[]; // C++ really does not complain about this?
+    } values[1];
+    // C++ does not have flexible arrays
+    // and -Wpedantic complains that values[] is not ISO C++
+    // let's use the bit with undefined behavior
   };
 
   struct read_format_single {
