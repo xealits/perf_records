@@ -209,6 +209,54 @@ And add more text.
 
 Updated event names from Linux `perf_event` (handy) nicknames to Intel's `perfmon`:
 
+<div class="perf_records">
+<details>
+  <summary>
+  <var class="perf_records_parameter" data-name="analysisID"><dfn>analysisID</dfn> = <data>1</data></var>
+  <div class="perf_records_conditions">
+  <var class="perf_records_parameter" data-name="n_thr"><dfn>n_thr</dfn> = <data>2</data></var>
+  <var class="perf_records_parameter" data-name="instr"><dfn>instr</dfn> = <data>1</data></var>
+  </div>
+  </summary>
+  <div class="perf_records_nest">
+    <var class="perf_records_parameter" data-name="app_count"><dfn>app_count</dfn> = <data>5</data></var>
+    <details>
+      <summary>
+      <var class="perf_records_parameter" data-name="thrMain"><dfn>thrMain</dfn> = <data>NA</data></var>
+      </summary>
+      <div class="perf_records_nest">
+        <var class="perf_records_parameter" data-name="CPU_CLK_UNHALTED.CORE_P"><dfn>CPU_CLK_UNHALTED.CORE_P</dfn> = <data>19221</data></var>
+        <var class="perf_records_parameter" data-name="LONGEST_LAT_CACHE.REFERENCE"><dfn>LONGEST_LAT_CACHE.REFERENCE</dfn> = <data>543</data></var>
+        <var class="perf_records_parameter" data-name="TOPDOWN_FE_BOUND.ALL"><dfn>TOPDOWN_FE_BOUND.ALL</dfn> = <data>50277</data></var>
+        <var class="perf_records_parameter" data-name="TOPDOWN_BE_BOUND.ALL"><dfn>TOPDOWN_BE_BOUND.ALL</dfn> = <data>9024</data></var>
+        <var class="perf_records_parameter" data-name="UOPS_RETIRED.ALL"><dfn>UOPS_RETIRED.ALL</dfn> = <data>5802</data></var>
+      </div>
+    </details>
+    <details>
+      <summary>
+      <var class="perf_records_parameter" data-name="thr1"><dfn>thr1</dfn> = <data>NA</data></var>
+      </summary>
+      <div class="perf_records_nest">
+        <var class="perf_records_parameter" data-name="CPU_CLK_UNHALTED.CORE_P"><dfn>CPU_CLK_UNHALTED.CORE_P</dfn> = <data>53920</data></var>
+        <var class="perf_records_parameter" data-name="TOPDOWN_FE_BOUND.ALL"><dfn>TOPDOWN_FE_BOUND.ALL</dfn> = <data>130655</data></var>
+        <var class="perf_records_parameter" data-name="UOPS_RETIRED.ALL"><dfn>UOPS_RETIRED.ALL</dfn> = <data>14307</data></var>
+      </div>
+    </details>
+  </div>
+</details>
+</div>
+
+And getting this CSV table (Github probably won't render it):
+
+```{.table aligns="LCR" caption="Example perf records" header="yes"}
+app_count,instr,n_thr,thr1,thr1.CPU_CLK_UNHALTED.CORE_P,thr1.TOPDOWN_FE_BOUND.ALL,thr1.UOPS_RETIRED.ALL,thr1.cpu-cycles,thr1.topdown-fe-bound,thr1.topdown-retiring,thrMain,thrMain.CPU_CLK_UNHALTED.CORE_P,thrMain.LONGEST_LAT_CACHE.REFERENCE,thrMain.TOPDOWN_BE_BOUND.ALL,thrMain.TOPDOWN_FE_BOUND.ALL,thrMain.UOPS_RETIRED.ALL,thrMain.cache-references,thrMain.cpu-cycles,thrMain.topdown-be-bound,thrMain.topdown-fe-bound,thrMain.topdown-retiring
+,,2,NA,,,,46581,114095,14543,NA,,,,,,438,16526,10296,39235,5803
+,,2,NA,,,,45249,110500,14340,NA,,,,,,466,16322,8308,42603,6253
+5,1,2,NA,,,,46725,114245,14318,NA,,,,,,485,14188,9237,35183,5803
+5,1,2,NA,,,,44896,109827,14276,NA,,,,,,441,16522,8048,43146,5803
+5,1,2,NA,53920,130655,14307,,,,NA,19221,543,9024,50277,5802,,,,,
+```
+
 
 # Render HTML with Pandoc
 

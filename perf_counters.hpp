@@ -68,7 +68,7 @@ class PerfCounter {
     struct {
       uint64_t value;
       uint64_t id;
-    }* values;
+    } values[]; // C++ really does not complain about this?
   };
 
   struct read_format_single {
