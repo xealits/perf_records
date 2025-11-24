@@ -4,9 +4,10 @@
 
 #include "perf_counters.hpp"
 #include "records.hpp"
+#include "known_events_gracemont.hpp"
 
 using PerfCounter =
-    perf_counters::PerfCounter<known_events_map_example>;
+    perf_counters::PerfCounter<known_events_gracemont>;
 
 struct AppStats {
   unsigned long long counter{0};
