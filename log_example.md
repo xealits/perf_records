@@ -207,7 +207,7 @@ Then let's change the config and try this:
 
 And add more text.
 
-When does HTML get the `<p>` back?
+Updated event names from Linux `perf_event` (handy) nicknames to Intel's `perfmon`:
 
 
 # Render HTML with Pandoc
