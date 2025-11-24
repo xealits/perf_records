@@ -5,6 +5,9 @@
 #include "perf_counters.hpp"
 #include "records.hpp"
 
+using PerfCounter =
+    perf_counters::PerfCounter<known_events_map_example>;
+
 struct AppStats {
   unsigned long long counter{0};
 };
@@ -29,7 +32,7 @@ Record<PerfCounter::CounterVal_t> translate_perf_record(
 
 Record<PerfCounter::CounterVal_t> translate_perf_counters(
     RecordString_t rec_name, const PerfCounter::AllCountersData& data) {
-  Record<PerfCounter::CounterVal_t> bench(rec_name);
+  Record<PerfCounter::CounterVal_t> bench{rec_name};
   bench.pid = data.pid;
   bench.cpu = data.cpu;
   for (const auto& rec : data.counters) {
@@ -78,7 +81,7 @@ int main() {
   auto bench = translate_perf_counters("thrMain", res);
   std::cout << bench << "\n\n";
 
-  decltype(bench) analysis_bench("analysisID");
+  decltype(bench) analysis_bench{"analysisID"};
   analysis_bench.value = 1;
   analysis_bench.conditions.push_back({.column_name = "n_thr", .value = 2});
   analysis_bench.conditions.push_back({.column_name = "instr", .value = 1});
