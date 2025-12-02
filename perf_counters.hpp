@@ -16,11 +16,14 @@
 
 #include "events_map.hpp"
 
-//#ifndef KNOWN_EVENTS_MAP_CUSTOM
-//static PerfEventMap_t& known_events_map = known_events_map_example;
-//#endif
+// #ifndef KNOWN_EVENTS_MAP_CUSTOM
+// static PerfEventMap_t& known_events_map = known_events_map_example;
+// #endif
 
 namespace perf_counters {
+
+bool perf_counter_enabled = true;
+
 template <PerfEventMap_t& known_events_map = known_events_map_example>
 class PerfCounter {
  public:
@@ -297,6 +300,8 @@ class PerfCounter {
   }
 
   void start_count(void) {
+    if (!perf_counter_enabled) return;
+
     for (const auto& [group_fd, cids] : counter_groups_) {
       if (cids.size() > 1) {
         ioctl(group_fd, PERF_EVENT_IOC_RESET, PERF_IOC_FLAG_GROUP);
@@ -314,6 +319,8 @@ class PerfCounter {
   }
 
   void stop_count(void) {
+    if (!perf_counter_enabled) return;
+
     if (!counter_is_running) {
       return;
     }
