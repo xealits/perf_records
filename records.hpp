@@ -29,12 +29,21 @@ struct Record {
     return value ? std::to_string(*value) : "NA";
   }
 
-  friend std::ostream& operator<<(std::ostream& outs, const Record<ValT>& rec) {
-    outs << rec.column_name << " @ " << rec.pid << " " << rec.cpu << " : "
-         << rec.value_s() << "\n";
-    for (const auto& subr : rec.subrecs) {
-      outs << " " << subr.column_name << " : " << subr.value_s() << ",";
+  void to_ostream(std::ostream& outs, unsigned nesting = 0) const {
+    for (unsigned nest = 0; nest < nesting; nest++) {
+      outs << " ";
     }
+
+    outs << column_name << " @ " << pid << " " << cpu << " : "
+         << value_s() << "\n";
+
+    for (const auto& subr : subrecs) {
+      subr.to_ostream(outs, nesting + 1);
+    }
+  }
+
+  friend std::ostream& operator<<(std::ostream& outs, const Record<ValT>& rec) {
+    rec.to_ostream(outs, 0);
     return outs;
   }
 

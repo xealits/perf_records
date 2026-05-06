@@ -13,6 +13,8 @@ file(WRITE ${CMAKE_BINARY_DIR}/.gitignore "*")
 set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+message(STATUS "${PROJECT_NAME} > in directory ${PROJECT_SOURCE_DIR}")
+
 add_library(perf_counters INTERFACE perf_counters.hpp)
 target_include_directories(perf_counters INTERFACE ${PROJECT_SOURCE_DIR}/)
 
