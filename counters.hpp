@@ -60,6 +60,7 @@ struct Counters {
             decltype(CallableGetCurrentCount()) count_at_scope_start;
 
             ScopeCounter(void) : count_at_scope_start{CallableGetCurrentCount()} {};
+            ScopeCounter(const auto& start_count) : count_at_scope_start{start_count} {};
 
             ~ScopeCounter() {
                 const auto increment_in_scope = CallableGetCurrentCount() - count_at_scope_start;
@@ -69,20 +70,24 @@ struct Counters {
 
         static auto make_scope_counter(void) {
             return ScopeCounter<CallableCurrentCounter>();
-        } 
+        }
+
+        static auto make_scope_counter(const auto& start_count) {
+            return ScopeCounter<CallableCurrentCounter>(start_count);
+        }
+
+        template<typename ParentCounterT>
+        struct SubCounters {
+            template<CounterNameT subcount_name>
+            using counter = DataStruct<subcount_name>;
+            using sub_counters = SubCounters<SubCounters<ParentCounterT>>;
+        };
+
+        using sub_counters = SubCounters<Counters<CounterDataT, CallableInputProc, CallableCurrentCounter>>;
     };
 
     template<CounterNameT name>
     using counter = DataStruct<name>;
-
-    template<typename ParentCounterT>
-    struct SubCounters {
-        template<CounterNameT name>
-        using counter = DataStruct<name>;
-        using sub_counters = SubCounters<SubCounters<ParentCounterT>>;
-    };
-
-    using sub_counters = SubCounters<Counters<CounterDataT>>;
 };
 
 };
