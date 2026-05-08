@@ -90,77 +90,84 @@ struct NameTreeNode {
   static constexpr inline TypePack<Subnodes...> subnodes_t{};
 };
 
-template<typename CounterDataT
+template<typename ParentCounterT
+    , typename CounterDataT
     , auto CallableInputProc = [](const auto& inp) {return inp;}
     // WARNING: an auto parameter in a lambda in a template is a bug in GCC 14
     // it is fixed in GCC 14.3
     // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=88313
     , auto CallableCurrentCounter = [](void) {} /// default is intentionally broken
-    >
+>
 
+struct CountersType {
+    using parent_t = ParentCounterT;
+    using data_t = CounterDataT;
+    static inline auto input_proc = CallableInputProc;
+    static inline auto current_count_getter = CallableCurrentCounter;
+};
+
+// a starting point for parent types
+struct EmptyT {};
+
+template<CounterNameT t_name, typename counters_type>
 struct Counters {
-    template<CounterNameT name>
-    struct DataStruct {
-        static inline std::optional<CounterDataT> data{};
+    using this_t = Counters<t_name, counters_type>;
+    static inline CounterNameT name = t_name;
+    static inline std::optional<typename counters_type::data_t> data{};
 
-        template<typename InpT>
-        static void set(const InpT& inp) { data = CallableInputProc(inp); }
+    template<CounterNameT subcount_name>
+    using counter = Counters<subcount_name,
+        CountersType<this_t, typename counters_type::data_t, counters_type::input_proc, counters_type::current_count_getter>>;
 
-        template<typename InpT>
-        static void increment(const InpT& inp) {
-            if (!data.has_value()) {
-                data.emplace(); // initialize the data
-            }
-            *data += CallableInputProc(inp);
+    template<typename InpT>
+    static void set(const InpT& inp) { data = counters_type::input_proc(inp); }
+
+    template<typename InpT>
+    static void increment(const InpT& inp) {
+        if (!data.has_value()) {
+            data.emplace(); // initialize the data
         }
+        *data += counters_type::input_proc(inp);
+    }
 
-        static auto get(void) { return data; }
+    static auto get(void) { return data; }
 
-        template<auto CallableGetCurrentCount>
-        struct ScopeCounter {
-            decltype(CallableGetCurrentCount()) count_at_scope_start;
+    struct ScopeCounter {
+        decltype(counters_type::current_count_getter()) count_at_scope_start;
 
-            ScopeCounter(void) : count_at_scope_start{CallableGetCurrentCount()} {};
-            ScopeCounter(const auto& start_count) : count_at_scope_start{start_count} {};
+        ScopeCounter(void) : count_at_scope_start{counters_type::current_count_getter()} {};
+        ScopeCounter(const auto& start_count) : count_at_scope_start{start_count} {};
 
-            ~ScopeCounter() {
-                const auto increment_in_scope = CallableGetCurrentCount() - count_at_scope_start;
-                increment(increment_in_scope);
-            }
-        };
-
-        static auto make_scope_counter(void) {
-            return ScopeCounter<CallableCurrentCounter>();
+        ~ScopeCounter() {
+            const auto increment_in_scope = counters_type::current_count_getter() - count_at_scope_start;
+            increment(increment_in_scope);
         }
-
-        static auto make_scope_counter(const auto& start_count) {
-            return ScopeCounter<CallableCurrentCounter>(start_count);
-        }
-
-        template<typename ParentCounterT>
-        struct SubCounters {
-            template<CounterNameT subcount_name>
-            using counter = DataStruct<subcount_name>;
-            using sub_counters = SubCounters<SubCounters<ParentCounterT>>;
-        };
-
-        using sub_counters = SubCounters<Counters<CounterDataT, CallableInputProc, CallableCurrentCounter>>;
     };
 
-    template<CounterNameT name>
-    using counter = DataStruct<name>;
+    //static auto make_scope_counter(void) {
+    //    return ScopeCounter<CallableCurrentCounter>();
+    //}
+
+    //static auto make_scope_counter(const auto& start_count) {
+    //    return ScopeCounter<CallableCurrentCounter>(start_count);
+    //}
 
     // helper to convert the counters data to an std records structure
     template<typename ParentCounters, typename OutMapNameT, typename Subnode, typename... Rest>
-    static void add_subnodes_to_map(std::map<OutMapNameT, RecordStd<CounterDataT>>& nodes_map, const TypePack<Subnode, Rest...> pack) {
+    static void add_subnodes_to_map(
+        std::map<OutMapNameT, RecordStd<typename counters_type::data_t>>& nodes_map,
+        const TypePack<Subnode, Rest...> pack)
+
+    {
         {
             // add the Subnode and its nested tree if present
-            RecordStd<CounterDataT> rec;
-            // get the subnode data from the parent type
+            RecordStd<typename counters_type::data_t> rec;
+            // get the subnode data from the parent counters_type
             rec.data = ParentCounters::template counter<Subnode::node_name>::data;
+            rec.name = Subnode::node_name;
 
             if constexpr (sizeof_pack(Subnode::subnodes_t) > 0) {
-                using sub_counters_t = ParentCounters::template counter<Subnode::node_name>::sub_counters;
+                using sub_counters_t = ParentCounters::template counter<Subnode::node_name>;
                 add_subnodes_to_map<sub_counters_t>(rec.sub_records, Subnode::subnodes_t);
             }
             nodes_map[Subnode::node_name] = rec;
@@ -174,34 +181,41 @@ struct Counters {
     }
 
     template<typename NodeCounter, typename... Subnodes>
-    static RecordStd<CounterDataT> nametree_to_record_std(const TypePack<Subnodes...>& pack) {
-        auto rec_data = NodeCounter::data;
+    static RecordStd<typename counters_type::data_t> nametree_to_record_std(const TypePack<Subnodes...>& pack) {
+        //auto rec_data = NodeCounter::data;
+        RecordStd<typename counters_type::data_t> rec_std;
+        rec_std.data = NodeCounter::data;
+        rec_std.name = NodeCounter::name;
 
-        if constexpr (sizeof...(Subnodes) == 0) {
-            return RecordStd<CounterDataT>{rec_data};
+        if constexpr (sizeof...(Subnodes) > 0) {
+            //RecordStd<typename counters_type::data_t> rec_tree;
+            //rec_tree.data = rec_data;
+            //rec_tree.name = rec_data;
+
+            //using sub_counters_t = NodeCounter;
+            add_subnodes_to_map<NodeCounter>(rec_std.sub_records, TypePack<Subnodes...>{});
         }
 
-        else {
-            RecordStd<CounterDataT> rec_tree;
-            rec_tree.data = rec_data;
-
-            using sub_counters_t = NodeCounter::sub_counters;
-            add_subnodes_to_map<sub_counters_t>(rec_tree.sub_records, TypePack<Subnodes...>{});
-            return rec_tree;
-        }
+        return rec_std;
     }
 
     template<typename Nodetree, typename... OtherNodetrees>
-    static RecordStd<CounterDataT> nametree_to_record_std(void) {
-        RecordStd<CounterDataT> top_counters_record; // TODO: currently Counters is a bit abnormal:
+    static RecordStd<typename counters_type::data_t> nametree_to_record_std(void) {
+        RecordStd<typename counters_type::data_t> top_counters_record;
+        // TODO: currently Counters is a bit abnormal:
+        // -- now it should not be abnormal anymore!
+        //
         // it contains counter<name> template
         // which instantiates a tree of subnodes
         // so Counters is unlike its subnodes, it is a set of these subnode trees
         // probably I should converge them - give Counters an ID name and turn it into a subnode tree itself
         // it makes sense, because the same data-related type parameters (data type and two processing lambdas)
         // can be used in a bunch of different areas of the code (the timing counters e.g.)
+        top_counters_record.data = data;
+        top_counters_record.name = name;
 
-        using CounterT = Counters<CounterDataT, CallableInputProc, CallableCurrentCounter>::counter<Nodetree::node_name>;
+        //using CounterT = Counters<counters_type::data_t, counters_type::input_proc, counters_type::current_count_getter>::counter<Nodetree::node_name>;
+        using CounterT = counter<Nodetree::node_name>;
         auto rec = nametree_to_record_std<CounterT>(Nodetree::subnodes_t);
         top_counters_record.sub_records[Nodetree::node_name] = rec;
 

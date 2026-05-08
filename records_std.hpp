@@ -15,9 +15,10 @@ namespace PERF_RECORDS_NAMESPACE_NAME {
 template<typename DataT>
 struct RecordStd {
   std::optional<DataT> data{};
+  std::string name{};
   std::map<std::string, RecordStd<DataT>> sub_records{};
 
-  void print(const std::string& name, unsigned nesting = 0) const {
+  void print(unsigned nesting = 0) const {
     for (unsigned ind = 0; ind < nesting; ind++) std::cout << " ";
     if (data.has_value()) {
       std::cout << "RecordStd " << name << " = " << data.value() << '\n';
@@ -28,7 +29,7 @@ struct RecordStd {
     }
 
     for (const auto& [name, rec_std] : sub_records) {
-      rec_std.print(name, nesting+1);
+      rec_std.print(nesting+1);
     }
   }
 };
