@@ -8,17 +8,24 @@
 
 #include <string>
 #include <map>
+#include <optional>
 
 namespace PERF_RECORDS_NAMESPACE_NAME {
 
 template<typename DataT>
 struct RecordStd {
-  DataT data{};
+  std::optional<DataT> data{};
   std::map<std::string, RecordStd<DataT>> sub_records{};
 
   void print(const std::string& name, unsigned nesting = 0) const {
     for (unsigned ind = 0; ind < nesting; ind++) std::cout << " ";
-    std::cout << "RecordStd " << name << " = " << data << '\n';
+    if (data.has_value()) {
+      std::cout << "RecordStd " << name << " = " << data.value() << '\n';
+    }
+
+    else {
+      std::cout << "RecordStd " << name << " = NA\n";
+    }
 
     for (const auto& [name, rec_std] : sub_records) {
       rec_std.print(name, nesting+1);

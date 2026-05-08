@@ -3,6 +3,7 @@
 #define PERF_RECORDS_NAMESPACE_NAME perf_records
 #endif
 
+#include <optional>
 #include "records_std.hpp"
 
 namespace PERF_RECORDS_NAMESPACE_NAME {
@@ -100,15 +101,20 @@ template<typename CounterDataT
 struct Counters {
     template<CounterNameT name>
     struct DataStruct {
-        static inline CounterDataT data{};
+        static inline std::optional<CounterDataT> data{};
 
         template<typename InpT>
         static void set(const InpT& inp) { data = CallableInputProc(inp); }
 
         template<typename InpT>
-        static void increment(const InpT& inp) { data += CallableInputProc(inp); }
+        static void increment(const InpT& inp) {
+            if (!data.has_value()) {
+                data.emplace(); // initialize the data
+            }
+            *data += CallableInputProc(inp);
+        }
 
-        static CounterDataT get(void) { return data; }
+        static auto get(void) { return data; }
 
         template<auto CallableGetCurrentCount>
         struct ScopeCounter {
@@ -169,7 +175,7 @@ struct Counters {
 
     template<typename NodeCounter, typename... Subnodes>
     static RecordStd<CounterDataT> nametree_to_record_std(const TypePack<Subnodes...>& pack) {
-        CounterDataT rec_data = NodeCounter::data;
+        auto rec_data = NodeCounter::data;
 
         if constexpr (sizeof...(Subnodes) == 0) {
             return RecordStd<CounterDataT>{rec_data};
