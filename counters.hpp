@@ -144,14 +144,6 @@ struct Counters {
         }
     };
 
-    //static auto make_scope_counter(void) {
-    //    return ScopeCounter<CallableCurrentCounter>();
-    //}
-
-    //static auto make_scope_counter(const auto& start_count) {
-    //    return ScopeCounter<CallableCurrentCounter>(start_count);
-    //}
-
     // helper to convert the counters data to an std records structure
     template<typename ParentCounters, typename OutMapNameT, typename Subnode, typename... Rest>
     static void add_subnodes_to_map(
@@ -188,11 +180,6 @@ struct Counters {
         rec_std.name = NodeCounter::name;
 
         if constexpr (sizeof...(Subnodes) > 0) {
-            //RecordStd<typename counters_type::data_t> rec_tree;
-            //rec_tree.data = rec_data;
-            //rec_tree.name = rec_data;
-
-            //using sub_counters_t = NodeCounter;
             add_subnodes_to_map<NodeCounter>(rec_std.sub_records, TypePack<Subnodes...>{});
         }
 
@@ -202,19 +189,9 @@ struct Counters {
     template<typename Nodetree, typename... OtherNodetrees>
     static RecordStd<typename counters_type::data_t> nametree_to_record_std(void) {
         RecordStd<typename counters_type::data_t> top_counters_record;
-        // TODO: currently Counters is a bit abnormal:
-        // -- now it should not be abnormal anymore!
-        //
-        // it contains counter<name> template
-        // which instantiates a tree of subnodes
-        // so Counters is unlike its subnodes, it is a set of these subnode trees
-        // probably I should converge them - give Counters an ID name and turn it into a subnode tree itself
-        // it makes sense, because the same data-related type parameters (data type and two processing lambdas)
-        // can be used in a bunch of different areas of the code (the timing counters e.g.)
         top_counters_record.data = data;
         top_counters_record.name = name;
 
-        //using CounterT = Counters<counters_type::data_t, counters_type::input_proc, counters_type::current_count_getter>::counter<Nodetree::node_name>;
         using CounterT = counter<Nodetree::node_name>;
         auto rec = nametree_to_record_std<CounterT>(Nodetree::subnodes_t);
         top_counters_record.sub_records[Nodetree::node_name] = rec;
