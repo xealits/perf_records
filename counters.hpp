@@ -90,6 +90,36 @@ struct NameTreeNode {
   static constexpr inline TypePack<Subnodes...> subnodes_t{};
 };
 
+/// a wrapper around DataT that does nothing but implements std::optional-like interface
+/// std::optional interface follows the iterators interface
+/// the wrapper just provides elements of this interface for a simple data type
+template<typename DataT>
+struct IteratorLikeWrapper {
+  using this_t = IteratorLikeWrapper<DataT>;
+  DataT payload{};
+
+  constexpr bool has_value(void) const {return true;}
+  constexpr void emplace(void) const {}
+  constexpr DataT& value(void) {return payload;}
+  constexpr const DataT& value(void) const {return payload;}
+  this_t& operator=(const DataT& new_val) {payload = new_val; return *this;}
+  DataT& operator*(void) {return payload;}
+  DataT* operator->(void) {return &payload;}
+};
+
+template<typename DataT, bool use_optional>
+struct OptionalOrBare;
+
+template<typename DataT>
+struct OptionalOrBare<DataT, true> {
+  using type = std::optional<DataT>;
+};
+
+template<typename DataT>
+struct OptionalOrBare<DataT, false> {
+  using type = IteratorLikeWrapper<DataT>;
+};
+
 template<typename ParentCounterT
     , typename CounterDataT
     , auto CallableInputProc = [](const auto& inp) {return inp;}
@@ -97,13 +127,16 @@ template<typename ParentCounterT
     // it is fixed in GCC 14.3
     // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=88313
     , auto CallableCurrentCounter = [](void) {} /// default is intentionally broken
+    , bool UseOptional = true
 >
 
 struct CountersType {
     using parent_t = ParentCounterT;
     using data_t = CounterDataT;
+    using wrapped_data_t = OptionalOrBare<CounterDataT, UseOptional>::type;
     static inline auto input_proc = CallableInputProc;
     static inline auto current_count_getter = CallableCurrentCounter;
+    static inline constexpr auto use_optional = UseOptional;
 };
 
 // a starting point for parent types
@@ -113,11 +146,12 @@ template<CounterNameT t_name, typename counters_type>
 struct Counters {
     using this_t = Counters<t_name, counters_type>;
     static inline CounterNameT name = t_name;
-    static inline std::optional<typename counters_type::data_t> data{};
+    static inline counters_type::wrapped_data_t data{};
 
     template<CounterNameT subcount_name>
     using counter = Counters<subcount_name,
-        CountersType<this_t, typename counters_type::data_t, counters_type::input_proc, counters_type::current_count_getter>>;
+        CountersType<this_t,
+            typename counters_type::data_t, counters_type::input_proc, counters_type::current_count_getter, counters_type::use_optional>>;
 
     template<typename InpT>
     static void set(const InpT& inp) { data = counters_type::input_proc(inp); }
@@ -155,8 +189,15 @@ struct Counters {
             // add the Subnode and its nested tree if present
             RecordStd<typename counters_type::data_t> rec;
             // get the subnode data from the parent counters_type
-            rec.data = ParentCounters::template counter<Subnode::node_name>::data;
             rec.name = Subnode::node_name;
+
+            // RecordStd data is always std::optional
+            if constexpr (counters_type::use_optional) {
+                rec.data = ParentCounters::template counter<Subnode::node_name>::data;
+            } else {
+                // assume the value -- because the wrapper always has a value
+                rec.data = ParentCounters::template counter<Subnode::node_name>::data.value();
+            }
 
             if constexpr (sizeof_pack(Subnode::subnodes_t) > 0) {
                 using sub_counters_t = ParentCounters::template counter<Subnode::node_name>;
@@ -176,8 +217,13 @@ struct Counters {
     static RecordStd<typename counters_type::data_t> nametree_to_record_std(const TypePack<Subnodes...>& pack) {
         //auto rec_data = NodeCounter::data;
         RecordStd<typename counters_type::data_t> rec_std;
-        rec_std.data = NodeCounter::data;
         rec_std.name = NodeCounter::name;
+
+        if constexpr (counters_type::use_optional) {
+            rec_std.data = NodeCounter::data;
+        } else {
+            rec_std.data = NodeCounter::data.value();
+        }
 
         if constexpr (sizeof...(Subnodes) > 0) {
             add_subnodes_to_map<NodeCounter>(rec_std.sub_records, TypePack<Subnodes...>{});
@@ -189,8 +235,13 @@ struct Counters {
     template<typename Nodetree, typename... OtherNodetrees>
     static RecordStd<typename counters_type::data_t> nametree_to_record_std(void) {
         RecordStd<typename counters_type::data_t> top_counters_record;
-        top_counters_record.data = data;
         top_counters_record.name = name;
+
+        if constexpr (counters_type::use_optional) {
+            top_counters_record.data = data;
+        } else {
+            top_counters_record.data = data.value();
+        }
 
         using CounterT = counter<Nodetree::node_name>;
         auto rec = nametree_to_record_std<CounterT>(Nodetree::subnodes_t);
