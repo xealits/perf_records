@@ -90,23 +90,6 @@ struct NameTreeNode {
   static constexpr inline TypePack<Subnodes...> subnodes_t{};
 };
 
-/// a wrapper around DataT that does nothing but implements std::optional-like interface
-/// std::optional interface follows the iterators interface
-/// the wrapper just provides elements of this interface for a simple data type
-template<typename DataT>
-struct IteratorLikeWrapper {
-  using this_t = IteratorLikeWrapper<DataT>;
-  DataT payload{};
-
-  constexpr bool has_value(void) const {return true;}
-  constexpr void emplace(void) const {}
-  constexpr DataT& value(void) {return payload;}
-  constexpr const DataT& value(void) const {return payload;}
-  this_t& operator=(const DataT& new_val) {payload = new_val; return *this;}
-  DataT& operator*(void) {return payload;}
-  DataT* operator->(void) {return &payload;}
-};
-
 template<typename DataT, bool use_optional>
 struct OptionalOrBare;
 
@@ -117,23 +100,22 @@ struct OptionalOrBare<DataT, true> {
 
 template<typename DataT>
 struct OptionalOrBare<DataT, false> {
-  using type = IteratorLikeWrapper<DataT>;
+  using type = DataT;
 };
 
 template<typename ParentCounterT
     , typename CounterDataT
+    , bool UseOptional = true
     , auto CallableInputProc = [](const auto& inp) {return inp;}
     // WARNING: an auto parameter in a lambda in a template is a bug in GCC 14
     // it is fixed in GCC 14.3
     // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=88313
     , auto CallableCurrentCounter = [](void) {} /// default is intentionally broken
-    , bool UseOptional = true
 >
 
 struct CountersType {
     using parent_t = ParentCounterT;
     using data_t = CounterDataT;
-    using wrapped_data_t = OptionalOrBare<CounterDataT, UseOptional>::type;
     static inline auto input_proc = CallableInputProc;
     static inline auto current_count_getter = CallableCurrentCounter;
     static inline constexpr auto use_optional = UseOptional;
@@ -146,34 +128,48 @@ template<CounterNameT t_name, typename counters_type>
 struct Counters {
     using this_t = Counters<t_name, counters_type>;
     static inline CounterNameT name = t_name;
-    static inline counters_type::wrapped_data_t data{};
+    static inline OptionalOrBare<typename counters_type::data_t,
+                  counters_type::use_optional>::type
+                    data{};
 
     template<CounterNameT subcount_name>
     using counter = Counters<subcount_name,
         CountersType<this_t,
-            typename counters_type::data_t, counters_type::input_proc, counters_type::current_count_getter, counters_type::use_optional>>;
+            typename counters_type::data_t, counters_type::use_optional,
+            counters_type::input_proc, counters_type::current_count_getter>>;
 
     template<typename InpT>
     static void set(const InpT& inp) { data = counters_type::input_proc(inp); }
 
     template<typename InpT>
     static void increment(const InpT& inp) {
-        if (!data.has_value()) {
-            data.emplace(); // initialize the data
+        if constexpr (counters_type::use_optional) {
+          if (!data.has_value()) {
+              data.emplace(); // initialize the data
+          }
+          *data += counters_type::input_proc(inp);
         }
-        *data += counters_type::input_proc(inp);
+
+        else {
+          data += counters_type::input_proc(inp);
+        }
     }
 
-    static auto get(void) { return data; }
+    // return a reference to the counter
+    // in case someone wants to do something manual with it
+    static auto& get(void) { return data; }
 
     struct ScopeCounter {
         decltype(counters_type::current_count_getter()) count_at_scope_start;
 
-        ScopeCounter(void) : count_at_scope_start{counters_type::current_count_getter()} {};
-        ScopeCounter(const auto& start_count) : count_at_scope_start{start_count} {};
+        ScopeCounter(void)
+          : count_at_scope_start{counters_type::current_count_getter()} {};
+        ScopeCounter(const auto& start_count)
+          : count_at_scope_start{start_count} {};
 
         ~ScopeCounter() {
-            const auto increment_in_scope = counters_type::current_count_getter() - count_at_scope_start;
+            const auto increment_in_scope =
+              counters_type::current_count_getter() - count_at_scope_start;
             increment(increment_in_scope);
         }
     };
@@ -192,16 +188,13 @@ struct Counters {
             rec.name = Subnode::node_name;
 
             // RecordStd data is always std::optional
-            if constexpr (counters_type::use_optional) {
-                rec.data = ParentCounters::template counter<Subnode::node_name>::data;
-            } else {
-                // assume the value -- because the wrapper always has a value
-                rec.data = ParentCounters::template counter<Subnode::node_name>::data.value();
-            }
+            rec.data = ParentCounters::template counter<Subnode::node_name>::data;
 
             if constexpr (sizeof_pack(Subnode::subnodes_t) > 0) {
-                using sub_counters_t = ParentCounters::template counter<Subnode::node_name>;
-                add_subnodes_to_map<sub_counters_t>(rec.sub_records, Subnode::subnodes_t);
+                using sub_counters_t =
+                  ParentCounters::template counter<Subnode::node_name>;
+                add_subnodes_to_map<sub_counters_t>(
+                    rec.sub_records, Subnode::subnodes_t);
             }
             nodes_map[Subnode::node_name] = rec;
         }
@@ -214,16 +207,12 @@ struct Counters {
     }
 
     template<typename NodeCounter, typename... Subnodes>
-    static RecordStd<typename counters_type::data_t> nametree_to_record_std(const TypePack<Subnodes...>& pack) {
+    static RecordStd<typename counters_type::data_t>
+    nametree_to_record_std(const TypePack<Subnodes...>& pack) {
         //auto rec_data = NodeCounter::data;
         RecordStd<typename counters_type::data_t> rec_std;
         rec_std.name = NodeCounter::name;
-
-        if constexpr (counters_type::use_optional) {
-            rec_std.data = NodeCounter::data;
-        } else {
-            rec_std.data = NodeCounter::data.value();
-        }
+        rec_std.data = NodeCounter::data;
 
         if constexpr (sizeof...(Subnodes) > 0) {
             add_subnodes_to_map<NodeCounter>(rec_std.sub_records, TypePack<Subnodes...>{});
@@ -236,12 +225,7 @@ struct Counters {
     static RecordStd<typename counters_type::data_t> nametree_to_record_std(void) {
         RecordStd<typename counters_type::data_t> top_counters_record;
         top_counters_record.name = name;
-
-        if constexpr (counters_type::use_optional) {
-            top_counters_record.data = data;
-        } else {
-            top_counters_record.data = data.value();
-        }
+        top_counters_record.data = data;
 
         using CounterT = counter<Nodetree::node_name>;
         auto rec = nametree_to_record_std<CounterT>(Nodetree::subnodes_t);
@@ -249,7 +233,10 @@ struct Counters {
 
         if constexpr (sizeof...(OtherNodetrees) > 0) {
             auto other_top_rec = nametree_to_record_std<OtherNodetrees...>();
-            top_counters_record.sub_records.insert(other_top_rec.sub_records.begin(), other_top_rec.sub_records.end());
+            top_counters_record.sub_records.insert(
+                other_top_rec.sub_records.begin(),
+                other_top_rec.sub_records.end()
+            );
         }
 
         return top_counters_record;
