@@ -90,22 +90,34 @@ struct NameTreeNode {
   static constexpr inline TypePack<Subnodes...> subnodes_t{};
 };
 
-template<typename DataT, bool use_optional>
-struct OptionalOrBare;
+template<class T, template<class> class U>
+inline constexpr bool is_instance_of_v = std::false_type{};
+
+template<template<class> class U, class V>
+inline constexpr bool is_instance_of_v<U<V>,U> = std::true_type{};
+
+template<typename DataT, bool using_optional>
+struct StripOptional;
 
 template<typename DataT>
-struct OptionalOrBare<DataT, true> {
-  using type = std::optional<DataT>;
+struct StripOptional<DataT, true> {
+  using type = DataT::value_type;
 };
 
 template<typename DataT>
-struct OptionalOrBare<DataT, false> {
+struct StripOptional<DataT, false> {
   using type = DataT;
 };
 
+template<typename DataT>
+struct OptionalOrBare {
+  using type = DataT;
+  static inline constexpr bool using_optional = is_instance_of_v<DataT, std::optional>;
+  using data_t = StripOptional<DataT, using_optional>::type;
+};
+
 template<typename ParentCounterT
-    , typename CounterDataT
-    , bool UseOptional = true
+    , typename CounterOptionalOrDataT
     , auto CallableInputProc = [](const auto& inp) {return inp;}
     // WARNING: an auto parameter in a lambda in a template is a bug in GCC 14
     // it is fixed in GCC 14.3
@@ -115,10 +127,12 @@ template<typename ParentCounterT
 
 struct CountersType {
     using parent_t = ParentCounterT;
-    using data_t = CounterDataT;
+    using optional_or_data_t = std::conditional<is_instance_of_v<CounterOptionalOrDataT, OptionalOrBare>,
+          CounterOptionalOrDataT,
+          OptionalOrBare<CounterOptionalOrDataT>
+    >::type;
     static inline auto input_proc = CallableInputProc;
     static inline auto current_count_getter = CallableCurrentCounter;
-    static inline constexpr auto use_optional = UseOptional;
 };
 
 // a starting point for parent types
@@ -128,14 +142,12 @@ template<CounterNameT t_name, typename counters_type>
 struct Counters {
     using this_t = Counters<t_name, counters_type>;
     static inline CounterNameT name = t_name;
-    static inline OptionalOrBare<typename counters_type::data_t,
-                  counters_type::use_optional>::type
-                    data{};
+    static inline counters_type::optional_or_data_t::type data{};
 
     template<CounterNameT subcount_name>
     using counter = Counters<subcount_name,
         CountersType<this_t,
-            typename counters_type::data_t, counters_type::use_optional,
+            typename counters_type::optional_or_data_t,
             counters_type::input_proc, counters_type::current_count_getter>>;
 
     template<typename InpT>
@@ -143,7 +155,7 @@ struct Counters {
 
     template<typename InpT>
     static void increment(const InpT& inp) {
-        if constexpr (counters_type::use_optional) {
+        if constexpr (counters_type::optional_or_data_t::using_optional) {
           if (!data.has_value()) {
               data.emplace(); // initialize the data
           }
@@ -177,13 +189,13 @@ struct Counters {
     // helper to convert the counters data to an std records structure
     template<typename ParentCounters, typename OutMapNameT, typename Subnode, typename... Rest>
     static void add_subnodes_to_map(
-        std::map<OutMapNameT, RecordStd<typename counters_type::data_t>>& nodes_map,
+        std::map<OutMapNameT, RecordStd<typename counters_type::optional_or_data_t::data_t>>& nodes_map,
         const TypePack<Subnode, Rest...> pack)
 
     {
         {
             // add the Subnode and its nested tree if present
-            RecordStd<typename counters_type::data_t> rec;
+            RecordStd<typename counters_type::optional_or_data_t::data_t> rec;
             // get the subnode data from the parent counters_type
             rec.name = Subnode::node_name;
 
@@ -207,10 +219,9 @@ struct Counters {
     }
 
     template<typename NodeCounter, typename... Subnodes>
-    static RecordStd<typename counters_type::data_t>
+    static RecordStd<typename counters_type::optional_or_data_t::data_t>
     nametree_to_record_std(const TypePack<Subnodes...>& pack) {
-        //auto rec_data = NodeCounter::data;
-        RecordStd<typename counters_type::data_t> rec_std;
+        RecordStd<typename counters_type::optional_or_data_t::data_t> rec_std;
         rec_std.name = NodeCounter::name;
         rec_std.data = NodeCounter::data;
 
@@ -222,8 +233,8 @@ struct Counters {
     }
 
     template<typename Nodetree, typename... OtherNodetrees>
-    static RecordStd<typename counters_type::data_t> nametree_to_record_std(void) {
-        RecordStd<typename counters_type::data_t> top_counters_record;
+    static RecordStd<typename counters_type::optional_or_data_t::data_t> nametree_to_record_std(void) {
+        RecordStd<typename counters_type::optional_or_data_t::data_t> top_counters_record;
         top_counters_record.name = name;
         top_counters_record.data = data;
 
