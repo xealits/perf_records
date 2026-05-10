@@ -116,13 +116,22 @@ struct OptionalOrBare {
   using data_t = StripOptional<DataT, using_optional>::type;
 };
 
+template<
+  // WARNING: an auto parameter in a lambda in a template is a bug in GCC 14
+  // it is fixed in GCC 14.3
+  // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=88313
+  typename LambdaProcT = decltype([](const auto& inp) {return inp;}),
+  /// default is intentionally broken
+  typename LambdaCounterGetterT = decltype([](void) {})
+>
+struct CountersTypeOptionalParameters {
+    LambdaProcT input_proc = {};
+    LambdaCounterGetterT current_count_getter = {};
+};
+
 template<typename ParentCounterT
     , typename CounterOptionalOrDataT
-    , auto CallableInputProc = [](const auto& inp) {return inp;}
-    // WARNING: an auto parameter in a lambda in a template is a bug in GCC 14
-    // it is fixed in GCC 14.3
-    // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=88313
-    , auto CallableCurrentCounter = [](void) {} /// default is intentionally broken
+    , CountersTypeOptionalParameters params = CountersTypeOptionalParameters<>{}
 >
 
 struct CountersType {
@@ -131,8 +140,9 @@ struct CountersType {
           CounterOptionalOrDataT,
           OptionalOrBare<CounterOptionalOrDataT>
     >::type;
-    static inline auto input_proc = CallableInputProc;
-    static inline auto current_count_getter = CallableCurrentCounter;
+    static inline auto optional_params = params;
+    static inline auto input_proc = params.input_proc;
+    static inline auto current_count_getter = params.current_count_getter;
 };
 
 // a starting point for parent types
@@ -146,9 +156,10 @@ struct Counters {
 
     template<CounterNameT subcount_name>
     using counter = Counters<subcount_name,
-        CountersType<this_t,
-            typename counters_type::optional_or_data_t,
-            counters_type::input_proc, counters_type::current_count_getter>>;
+        CountersType<this_t
+          , typename counters_type::optional_or_data_t
+          , counters_type::optional_params
+        >>;
 
     template<typename InpT>
     static void set(const InpT& inp) { data = counters_type::input_proc(inp); }
@@ -170,6 +181,8 @@ struct Counters {
     // return a reference to the counter
     // in case someone wants to do something manual with it
     static auto& get(void) { return data; }
+
+    static auto get_current(void) { return counters_type::current_count_getter(); }
 
     struct ScopeCounter {
         decltype(counters_type::current_count_getter()) count_at_scope_start;
