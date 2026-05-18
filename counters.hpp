@@ -8,23 +8,25 @@
 
 namespace PERF_RECORDS_NAMESPACE_NAME {
 
-template<unsigned str_size>
+template<size_t t_str_size>
 struct FixedString {
-    template<auto n_chars>
-    constexpr FixedString(const char (&str)[n_chars]) {
-        static_assert(n_chars + 1 < str_size, "the literal string must fit in the FixedString::value - because the literal string is used in the shaders, to match with the shaders the value must contain all of the attribute name");
+    size_t m_size;
+    template<size_t n_chars>
+    constexpr FixedString(const char (&str)[n_chars]) : m_size{n_chars} {
+        static_assert(n_chars > 0, "it is always true that a char[] size is > 0");
+        static_assert(n_chars + 1 < t_str_size, "the literal string must fit in the FixedString::value - because the literal string is used in the shaders, to match with the shaders the value must contain all of the attribute name");
         std::copy_n(str, n_chars, value);
         value[n_chars] = '\0';
     }
 
-    char value[str_size] = "";
+    char value[t_str_size] = "";
     constexpr const char* c_str(void) const noexcept {
         return &value[0];
     }
 
-    constexpr bool operator==(const FixedString<str_size>& other) const {
+    constexpr bool operator==(const FixedString<t_str_size>& other) const {
         // compare up to the first \0 character or the end of strings
-        for (size_t chi = 0; chi < str_size; chi++) {
+        for (size_t chi = 0; chi < t_str_size; chi++) {
             if (value[chi] != other.value[chi]) {
                 return false;
             }
@@ -38,9 +40,9 @@ struct FixedString {
     }
 
     // strict ordering is needed to use FixedString as a key in std::map
-    bool operator<(const FixedString<str_size>& other) const {
+    bool operator<(const FixedString<t_str_size>& other) const {
         // compare up to the first \0 character or the end of strings
-        for (size_t chi = 0; chi < str_size; chi++) {
+        for (size_t chi = 0; chi < t_str_size; chi++) {
             if (value[chi] != other.value[chi]) {
                 return value[chi] < other.value[chi];
             }
@@ -60,14 +62,14 @@ struct FixedString {
     }
 
     //
-    friend std::ostream& operator<<(std::ostream& outs, const FixedString<str_size>& fstr) {
+    friend std::ostream& operator<<(std::ostream& outs, const FixedString<t_str_size>& fstr) {
         outs << fstr.c_str();
         return outs;
     }
 
     // also convert to std::string
     operator std::string(void) const {
-        return std::string{value, value + str_size};
+        return std::string{value, value + m_size - 1};
     }
 };
 
@@ -183,6 +185,14 @@ struct Counters {
     static auto& get(void) { return data; }
 
     static auto get_current(void) { return counters_type::current_count_getter(); }
+
+    template<typename InpT>
+    static auto increment_current_diff(const InpT& inp_offset) {
+        auto current = get_current();
+        const auto diff = current - inp_offset;
+        increment(diff);
+        return current;
+    }
 
     struct ScopeCounter {
         decltype(counters_type::current_count_getter()) count_at_scope_start;
