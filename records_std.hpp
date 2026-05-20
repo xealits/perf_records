@@ -6,6 +6,7 @@
 #define PERF_RECORDS_NAMESPACE_NAME perf_records
 #endif
 
+#include <iostream>
 #include <string>
 #include <map>
 #include <optional>
