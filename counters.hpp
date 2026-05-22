@@ -209,6 +209,26 @@ struct Counters {
         }
     };
 
+    struct ScopeCounterConditional {
+        decltype(counters_type::current_count_getter()) count_at_scope_start;
+        bool m_do_increment_counter = false;
+
+        ScopeCounterConditional(bool increment_or_no)
+          : m_do_increment_counter{increment_or_no}
+          , count_at_scope_start{counters_type::current_count_getter()} {};
+        ScopeCounterConditional(bool increment_or_no, const auto& start_count)
+          : m_do_increment_counter{increment_or_no}
+          , count_at_scope_start{start_count} {};
+
+        ~ScopeCounterConditional() {
+            if (m_do_increment_counter) {
+                const auto increment_in_scope =
+                counters_type::current_count_getter() - count_at_scope_start;
+                increment(increment_in_scope);
+            }
+        }
+    };
+
     // helper to convert the counters data to an std records structure
     template<typename ParentCounters, typename OutMapNameT, typename Subnode, typename... Rest>
     static void add_subnodes_to_map(
