@@ -194,6 +194,7 @@ struct Counters {
         return current;
     }
 
+    template<bool log_increments_t = false>
     struct ScopeCounter {
         decltype(counters_type::current_count_getter()) count_at_scope_start;
 
@@ -206,9 +207,15 @@ struct Counters {
             const auto increment_in_scope =
               counters_type::current_count_getter() - count_at_scope_start;
             increment(increment_in_scope);
+
+            if constexpr (log_increments_t) {
+                std::cout << name << " ScopeCounter increment = "
+                    << increment_in_scope << "\n";
+            }
         }
     };
 
+    template<bool log_increments_t = false>
     struct ScopeCounterConditional {
         decltype(counters_type::current_count_getter()) count_at_scope_start;
         bool m_do_increment_counter = false;
@@ -225,6 +232,12 @@ struct Counters {
                 const auto increment_in_scope =
                 counters_type::current_count_getter() - count_at_scope_start;
                 increment(increment_in_scope);
+
+                if constexpr (log_increments_t) {
+                    std::cout << name
+                        << " ScopeCounterConditional increment = "
+                        << increment_in_scope << "\n";
+                }
             }
         }
     };
