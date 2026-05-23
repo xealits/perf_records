@@ -129,6 +129,7 @@ template<
 struct CountersTypeOptionalParameters {
     LambdaProcT input_proc = {};
     LambdaCounterGetterT current_count_getter = {};
+    //using current_count_t = decltype(current_count_getter());
 };
 
 template<typename ParentCounterT
@@ -145,6 +146,8 @@ struct CountersType {
     static inline auto optional_params = params;
     static inline auto input_proc = params.input_proc;
     static inline auto current_count_getter = params.current_count_getter;
+    //using current_count_t = params::current_count_t;
+    using current_count_t = decltype(current_count_getter());
 };
 
 // a starting point for parent types
@@ -196,12 +199,28 @@ struct Counters {
 
     template<bool log_increments_t = false>
     struct ScopeCounter {
-        decltype(counters_type::current_count_getter()) count_at_scope_start;
+        using count_t = decltype(counters_type::current_count_getter());
+        //using count_t = counters_type::current_count_t;
+        const count_t count_at_scope_start;
 
         ScopeCounter(void)
           : count_at_scope_start{counters_type::current_count_getter()} {};
+
+        // TODO:
+        // with the typical chrono clock timers, time_points and durations,
+        // the start_count deduction stopped working after the bool log_increments was added
+        // but it works fine in a simple separate example of a standalone ScopeCounter struct
+        // without the nesting of types that happens here
         ScopeCounter(const auto& start_count)
-          : count_at_scope_start{start_count} {};
+
+        // here it says "no known conversions from time_point to count_t aka decltype()"
+        // even though the type behind decltype is time_point
+        //ScopeCounter(const count_t& start_count)
+        //template<typename StartCountT>
+        //ScopeCounter(const StartCountT& start_count)
+          //: count_at_scope_start{static_cast<count_t>(start_count)}
+          : count_at_scope_start{start_count}
+        {};
 
         ~ScopeCounter() {
             const auto increment_in_scope =
