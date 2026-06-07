@@ -49,6 +49,12 @@ And looking at (not really) its code:
   jne .L6
 ```
 
+Using Intel perfmon description of events, and RAW PMU events in `perf_event`:
+```
+./dump_perfmon.py GenuineIntel-6-BE known_events_gracemont > known_events_gracemont.hpp
+```
+
+
 # testing an idea 1
 
 Metrics with a basic config without the app counter:
