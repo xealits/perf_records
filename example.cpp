@@ -7,15 +7,14 @@
 
 using Clock = std::chrono::steady_clock;
 
-using timers_t = perf_records::CountersType<perf_records::EmptyT                                 
-    , std::chrono::microseconds
-    , {
-        .input_proc = [](const auto& duration) {
-            return std::chrono::duration_cast<std::chrono::milliseconds>(duration);
-        },
-        .current_count_getter = [](void) { return Clock::now(); }
-    }
->;
+using timers_t = perf_records::CountersType<
+    perf_records::EmptyT, std::chrono::microseconds,
+    {.input_proc =
+         [](const auto& duration) {
+           return std::chrono::duration_cast<std::chrono::milliseconds>(
+               duration);
+         },
+     .current_count_getter = [](void) { return Clock::now(); }}>;
 
 using MainTimers = perf_records::Counters<"main", timers_t>;
 using ThreadTimers = perf_records::Counters<"thread", timers_t>;
@@ -59,18 +58,16 @@ int main() {
 
   {
     auto timing_main = MainTimers::nametree_to_record_std<
-      perf_records::NameTreeNode<"setup">,                                                   
-      perf_records::NameTreeNode<"test_done">,
-      perf_records::NameTreeNode<"thread_joined">
-    >();
+        perf_records::NameTreeNode<"setup">,
+        perf_records::NameTreeNode<"test_done">,
+        perf_records::NameTreeNode<"thread_joined"> >();
     timing_main.print();
   }
 
   {
     auto timing_thread = ThreadTimers::nametree_to_record_std<
-      perf_records::NameTreeNode<"setup">,                                                   
-      perf_records::NameTreeNode<"test_done">
-    >();
+        perf_records::NameTreeNode<"setup">,
+        perf_records::NameTreeNode<"test_done"> >();
     timing_thread.print();
   }
 
