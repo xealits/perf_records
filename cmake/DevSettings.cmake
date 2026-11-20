@@ -1,0 +1,3 @@
+if(NOT CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR)
+  file(WRITE ${CMAKE_BINARY_DIR}/.gitignore "*")
+endif()

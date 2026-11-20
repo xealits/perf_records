@@ -8,10 +8,10 @@ if (NOT DEFINED CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 23)
 endif()
 
-file(WRITE ${CMAKE_BINARY_DIR}/.gitignore "*")
+include(cmake/DevSettings.cmake)
+
 # run cmake --compile-no-warning-as-error to avoid this
 set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 message(STATUS "${PROJECT_NAME} > in directory ${PROJECT_SOURCE_DIR}")
 
