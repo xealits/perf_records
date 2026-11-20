@@ -1,4 +1,7 @@
 #pragma once
+/// \file perf_counters.hpp
+/// \brief PerfCounter class as an API for linux/perf_event.h
+
 // set up perf
 #include <errno.h>
 #include <linux/perf_event.h>

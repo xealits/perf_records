@@ -1,4 +1,7 @@
 #pragma once
+/// \file records.hpp
+/// \brief Record class for damping a tree of perf values to HTML log
+
 #include <unistd.h>
 
 #include <optional>

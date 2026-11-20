@@ -24,5 +24,8 @@ target_include_directories(records INTERFACE ${PROJECT_SOURCE_DIR}/)
 add_library(counters INTERFACE counters.hpp)
 target_include_directories(counters INTERFACE ${PROJECT_SOURCE_DIR}/)
 
-#add_executable(example example.cpp)
-#target_link_libraries(example PRIVATE perf_counters records)
+add_executable(example example.cpp)
+target_link_libraries(example PRIVATE perf_counters records)
+
+#add_executable(example example_pmu.cpp)
+#target_link_libraries(example_pmu PRIVATE perf_counters records)

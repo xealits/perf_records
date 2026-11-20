@@ -1,4 +1,7 @@
 #pragma once
+/// \file counters.hpp
+/// \brief Counters class template for custom program counters
+
 #ifndef PERF_RECORDS_NAMESPACE_NAME
 #define PERF_RECORDS_NAMESPACE_NAME perf_records
 #endif
