@@ -19,14 +19,28 @@ using timers_t = perf_records::CountersType<
 using MainTimers = perf_records::Counters<"main", timers_t>;
 using ThreadTimers = perf_records::Counters<"thread", timers_t>;
 
+template<typename CountersT>
+auto translate_counters()
+
+{
+  Record<decltype(CountersT::data)> bench{CountersT::name};
+  //bench.pid = data.pid;
+  //bench.cpu = data.cpu;
+  //for (const auto& rec : data.counters) {
+  //  bench.subrecs.push_back(translate_perf_record(rec.second));
+  //}
+  bench.value = CountersT::data;
+  return bench;
+}
+
 struct AppStats {
   unsigned long long counter{0};
 };
 
-auto code_under_test(void) {
+AppStats code_under_test(void) {
   AppStats stats;
   for (unsigned ind = 0; ind < 5; ind++) {
-    std::cout << ind << '\n';
+    std::cerr << ind << '\n';
     stats.counter++;
   }
 
@@ -65,7 +79,7 @@ int main() {
         perf_records::NameTreeNode<"setup">,
         perf_records::NameTreeNode<"test_done">,
         perf_records::NameTreeNode<"thread_joined">>();
-    timing_main.print();
+    //timing_main.print();
   }
 
   {
@@ -75,14 +89,28 @@ int main() {
                                    perf_records::NameTreeNode<"second_part">>,
         // perf_records::NameTreeNode<"test_full">, // no need for this one
         perf_records::NameTreeNode<"also_full">>();
-    timing_thread.print();
+    //timing_thread.print();
   }
 
-  const auto html_s_main = RecordToHtml<MainTimers>();
-  std::cout << html_s_main << std::endl;
+  //const auto html_s_main = RecordToHtml<MainTimers>();
+  //std::cout << html_s_main << std::endl;
 
-  const auto html_s_thr = RecordToHtml<ThreadTimers>();
-  std::cout << html_s_thr << std::endl;
+  //const auto html_s_thr = RecordToHtml<ThreadTimers>();
+  //std::cout << html_s_thr << std::endl;
+
+  auto bench_main = translate_counters<MainTimers>();
+  auto bench_thread = translate_counters<ThreadTimers>();
+
+  decltype(bench_main) analysis_bench{"analysisID"};
+  //analysis_bench.value = {1};
+  //analysis_bench.conditions.push_back({.column_name = "n_thr", .value = 2});
+  //analysis_bench.conditions.push_back({.column_name = "instr", .value = 1});
+  //analysis_bench.subrecs.push_back(
+  //    {.column_name = "app_count", .value = stats_main.counter});
+  analysis_bench.subrecs.push_back(bench_main);
+  analysis_bench.subrecs.push_back(bench_thread);
+
+  std::cout << analysis_bench.html() << "\n";
 
   return 0;
 }

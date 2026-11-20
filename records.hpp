@@ -83,7 +83,7 @@ std::string RecordToHtml(unsigned lev = 0) {
 
     if constexpr (using_optional) {
       const auto& opt_data = RecordLikeT::data;
-      if (opt_data.has_value()) oss << opt_data.data();
+      if (opt_data.has_value()) oss << opt_data.value();
     }
 
     else {
@@ -159,7 +159,13 @@ struct Record {
   std::vector<Record<ValT>> subrecs{};
 
   std::string value_s(void) const {
-    return value ? std::to_string(*value) : "NA";
+    if (value) {
+      //
+      std::ostringstream oss;
+      oss << value.value();
+      return oss.str();
+    }
+    else return "NA";
   }
 
   void to_ostream(std::ostream& outs, unsigned nesting = 0) const {

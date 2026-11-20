@@ -14,9 +14,6 @@ with open(fname, 'r') as f:
     example_s = f.read()
     
 soup = BeautifulSoup(example_s, 'html.parser')
-soup.select(".perf_records")[0].select("summary")[0]
-soup.select(".perf_records")[0].find("summary").find("var").get_text(strip=True)
-'testing X'
 
 def direct_text(soup_elem):
     return ''.join([x for x in soup_elem.contents if isinstance(x, str)])
