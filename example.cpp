@@ -31,7 +31,7 @@ auto code_under_test(void) {
   }
 
   using namespace std::chrono_literals;
-  std::this_thread::sleep_for(2s);
+  std::this_thread::sleep_for(0.1s);
 
   return stats;
 }
@@ -40,11 +40,15 @@ int main() {
   std::chrono::time_point ts_main_start = Clock::now();
 
   auto thr = std::thread([&ts_main_start](void) {
-    std::chrono::time_point ts_thread_start = Clock::now();
-    ThreadTimers::counter<"setup">::set(ts_thread_start - ts_main_start);
+    ThreadTimers::counter<"setup">::set(Clock::now() - ts_main_start);
+    auto test_timing = ThreadTimers::counter<"test_full">::ScopeCounter();
+    auto also_timing = ThreadTimers::counter<"also_full">::ScopeCounter();
     code_under_test();
-    code_under_test();
-    ThreadTimers::counter<"test_done">::set(Clock::now() - ts_thread_start);
+    {
+      auto test_timing = ThreadTimers::counter<"test_full">::counter<
+          "second_part">::ScopeCounter();
+      code_under_test();
+    }
   });
 
   std::chrono::time_point ts_setup_done = Clock::now();
@@ -60,16 +64,25 @@ int main() {
     auto timing_main = MainTimers::nametree_to_record_std<
         perf_records::NameTreeNode<"setup">,
         perf_records::NameTreeNode<"test_done">,
-        perf_records::NameTreeNode<"thread_joined"> >();
+        perf_records::NameTreeNode<"thread_joined">>();
     timing_main.print();
   }
 
   {
     auto timing_thread = ThreadTimers::nametree_to_record_std<
         perf_records::NameTreeNode<"setup">,
-        perf_records::NameTreeNode<"test_done"> >();
+        perf_records::NameTreeNode<"test_full",
+                                   perf_records::NameTreeNode<"second_part">>,
+        // perf_records::NameTreeNode<"test_full">, // no need for this one
+        perf_records::NameTreeNode<"also_full">>();
     timing_thread.print();
   }
+
+  const auto html_s_main = RecordToHtml<MainTimers>();
+  std::cout << html_s_main << std::endl;
+
+  const auto html_s_thr = RecordToHtml<ThreadTimers>();
+  std::cout << html_s_thr << std::endl;
 
   return 0;
 }

@@ -150,6 +150,8 @@ struct CountersType {
       std::conditional<is_instance_of_v<CounterOptionalOrDataT, OptionalOrBare>,
                        CounterOptionalOrDataT,
                        OptionalOrBare<CounterOptionalOrDataT>>::type;
+  static inline constexpr bool using_optional =
+      is_instance_of_v<CounterOptionalOrDataT, std::optional>;
   static inline auto optional_params = params;
   static inline auto input_proc = params.input_proc;
   static inline auto current_count_getter = params.current_count_getter;
@@ -163,6 +165,7 @@ struct EmptyT {};
 template <CounterNameT t_name, typename counters_type>
 struct Counters {
   using this_t = Counters<t_name, counters_type>;
+  using this_counters_type = counters_type;
   static inline CounterNameT name = t_name;
   static inline counters_type::optional_or_data_t::type data{};
 
