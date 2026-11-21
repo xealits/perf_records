@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.28..4)
+project(perf_records LANGUAGES CXX)
 
-project(perf_records
-  LANGUAGES CXX)
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+  include(CTest)
+endif()
 
 # only set the cxx_standard if it is not set by someone else
 if (NOT DEFINED CMAKE_CXX_STANDARD)
@@ -29,3 +31,14 @@ target_link_libraries(example PRIVATE perf_counters records)
 
 #add_executable(example example_pmu.cpp)
 #target_link_libraries(example_pmu PRIVATE perf_counters records)
+
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
+  add_test(
+    NAME workflow_session_example
+    COMMAND ${CMAKE_COMMAND}
+    -DSRC_DIR=${CMAKE_CURRENT_SOURCE_DIR}
+    -DCMD=$<TARGET_FILE:example>
+    -DOUT=${CMAKE_CURRENT_BINARY_DIR}/workflow_session_example_log.markdown
+    -P ${CMAKE_CURRENT_SOURCE_DIR}/workflow_test.cmake
+  )
+endif()

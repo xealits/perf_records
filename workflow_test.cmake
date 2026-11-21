@@ -98,9 +98,11 @@ if(NOT res EQUAL 0)
     message(FATAL_ERROR "Pandoc failed with ${res}:\n${pandoc_err}")
 endif()
 
+message(NOTICE "Python ${SRC_DIR}/log_to_csv.py")
+
 # parse the HTML to CSV
 execute_process(
-    COMMAND python log_to_csv.py "${PANDOC_LOG_HTML}"
+    COMMAND python "${SRC_DIR}/log_to_csv.py" "${PANDOC_LOG_HTML}"
     OUTPUT_VARIABLE csv_out
     ERROR_VARIABLE csv_err
     RESULT_VARIABLE res
