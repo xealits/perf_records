@@ -292,10 +292,10 @@ struct Counters {
   }
 
   template <typename Nodetree, typename... OtherNodetrees>
-  static void
-  nametree_to_sub_records(
-    std::vector<RecordStd<typename counters_type::optional_or_data_t::data_t>>& sub_records
-  )
+  static void nametree_to_sub_records(
+      std::vector<
+          RecordStd<typename counters_type::optional_or_data_t::data_t>>&
+          sub_records)
 
   {
     using CounterT = counter<Nodetree::node_name>;
