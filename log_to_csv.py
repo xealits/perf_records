@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 import csv
 from collections import defaultdict
 from pathlib import Path
-from sys import argv
+from sys import argv, stdout
 
 fname = Path(argv[1])
 
@@ -89,11 +89,18 @@ def flat_rec(rec_dict, topname = None):
 flat_records = list(flat_rec(rec) for rec in records)
 all_keys = set.union(*[set(d.keys()) for d in flat_records])
 
-with open(fname.with_suffix(".csv"), 'w', newline='') as csvfile:
-    fieldnames = sorted(all_keys)
-    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+#with open(fname.with_suffix(".csv"), 'w', newline='') as csvfile:
+#    fieldnames = sorted(all_keys)
+#    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+#
+#    writer.writeheader()
+#    for rec in flat_records:
+#        writer.writerow(rec)
 
-    writer.writeheader()
-    for rec in flat_records:
-        writer.writerow(rec)
+# let's just print to stdout for shell scripting
+fieldnames = sorted(all_keys)
+writer = csv.DictWriter(stdout, fieldnames=fieldnames)
 
+writer.writeheader()
+for rec in flat_records:
+    writer.writerow(rec)

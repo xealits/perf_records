@@ -262,12 +262,12 @@ class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb1-1"><a href="#c
   movl  (%rax), %edx
   .loc 1 21 20 is_stmt 0 view .LVU12
   movl  %edx, %ecx
-  andl  771, %ecx
+  andl  $1771, %ecx
   .loc 1 21 12 view .LVU13
   addl  %ecx, %edx
   movl  %edx, (%rax)
   .loc 1 19 5 is_stmt 1 discriminator 3 view .LVU14
-  addq  , %rax
+  addq  $4, %rax
 .LVL5:
 .L5:
   .loc 1 19 23 discriminator 1 view .LVU15
@@ -291,7 +291,7 @@ class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb1-1"><a href="#c
 <var class="perf_records_parameter" data-name="test_done"><dfn>test_done</dfn>
 = <data>100000us</data></var>
 <var class="perf_records_parameter" data-name="thread_joined"><dfn>thread_joined</dfn>
-= <data>201000us</data></var> </div> </details> <details> <summary>
+= <data>200000us</data></var> </div> </details> <details> <summary>
 <var class="perf_records_parameter" data-name="thread"><dfn>thread</dfn>
 = <data>0us</data></var> </summary> <div class="perf_records_nest">
 <var class="perf_records_parameter" data-name="setup"><dfn>setup</dfn> =
@@ -303,6 +303,19 @@ class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb1-1"><a href="#c
 <var class="perf_records_parameter" data-name="also_full"><dfn>also_full</dfn>
 = <data>200000us</data></var> </div> </details> </div> </details>
 </div></p>
+<h1 id="render-html-with-pandoc">Render HTML with Pandoc</h1>
+<p>Add the <code>--from</code> option to make Pandoc correctly treat
+custom tags as not a part of markdown:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> pandoc <span class="at">--from</span> markdown-markdown_in_html_blocks+raw_html <span class="dt">\</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">--standalone</span> log_example.md  <span class="op">&gt;</span> log_example.html</span></code></pre></div>
+<p>HTML can be parsed on its own:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> <span class="im">from</span> bs4 <span class="im">import</span> BeautifulSoup</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> example_s <span class="op">=</span> <span class="st">&quot;...&quot;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> soup <span class="op">=</span> BeautifulSoup(example_s, <span class="st">&#39;html.parser&#39;</span>)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> soup.select_one(<span class="st">&quot;var[data-name=analysisID] &gt; data&quot;</span>).contents</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>[<span class="st">&#39;1&#39;</span>]</span></code></pre></div>
 <p>And parse it to CSV:</p>
 <table style="width:96%;">
 <caption>The data of the whole session</caption>
@@ -335,7 +348,7 @@ class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb1-1"><a href="#c
 <td>0us</td>
 <td>0us</td>
 <td>100000us</td>
-<td>201000us</td>
+<td>200000us</td>
 <td>0us</td>
 <td>200000us</td>
 <td>0us</td>
