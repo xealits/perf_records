@@ -1,6 +1,9 @@
 #pragma once
 /// \file counters.hpp
 /// \brief Counters class template for custom program counters
+/// The point of Counters is to make a declarative API for the user.
+/// So that the caller site defines the counters, without declarations.
+/// To implement this, it is based on template instantiations.
 
 #ifndef PERF_RECORDS_NAMESPACE_NAME
 #define PERF_RECORDS_NAMESPACE_NAME perf_records
@@ -272,74 +275,48 @@ struct Counters {
     }
   };
 
-  // helper to convert the counters data to an std records structure
-  template <typename ParentCounters, typename OutMapNameT, typename Subnode,
-            typename... Rest>
-  static void add_subnodes_to_map(
-      std::map<OutMapNameT,
-               RecordStd<typename counters_type::optional_or_data_t::data_t>>&
-          nodes_map,
-      const TypePack<Subnode, Rest...> pack)
-
-  {
-    {
-      // add the Subnode and its nested tree if present
-      RecordStd<typename counters_type::optional_or_data_t::data_t> rec;
-      // get the subnode data from the parent counters_type
-      rec.name = Subnode::node_name;
-
-      // RecordStd data is always std::optional
-      rec.data = ParentCounters::template counter<Subnode::node_name>::data;
-
-      if constexpr (sizeof_pack(Subnode::subnodes_t) > 0) {
-        using sub_counters_t =
-            ParentCounters::template counter<Subnode::node_name>;
-        add_subnodes_to_map<sub_counters_t>(rec.sub_records,
-                                            Subnode::subnodes_t);
-      }
-      nodes_map[Subnode::node_name] = rec;
-    }
-
-    // add the Rest subnodes
-    constexpr auto rest_size = sizeof...(Rest);
-    if constexpr (rest_size > 0) {
-      add_subnodes_to_map<ParentCounters>(nodes_map, TypePack<Rest...>{});
-    }
-  }
-
-  template <typename NodeCounter, typename... Subnodes>
+  template <typename... NodeTrees>
   static RecordStd<typename counters_type::optional_or_data_t::data_t>
-  nametree_to_record_std(const TypePack<Subnodes...>& pack) {
-    RecordStd<typename counters_type::optional_or_data_t::data_t> rec_std;
-    rec_std.name = NodeCounter::name;
-    rec_std.data = NodeCounter::data;
+  nametree_to_record_std(const TypePack<NodeTrees...>& pack) {
+    RecordStd<typename counters_type::optional_or_data_t::data_t>
+        top_counters_record;
+    top_counters_record.name = name;
+    top_counters_record.value = data;
 
-    if constexpr (sizeof...(Subnodes) > 0) {
-      add_subnodes_to_map<NodeCounter>(rec_std.sub_records,
-                                       TypePack<Subnodes...>{});
+    // sub-records
+    if constexpr (sizeof...(NodeTrees) > 0) {
+      nametree_to_sub_records<NodeTrees...>(top_counters_record.sub_records);
     }
 
-    return rec_std;
+    return top_counters_record;
   }
 
   template <typename Nodetree, typename... OtherNodetrees>
+  static void
+  nametree_to_sub_records(
+    std::vector<RecordStd<typename counters_type::optional_or_data_t::data_t>>& sub_records
+  )
+
+  {
+    using CounterT = counter<Nodetree::node_name>;
+    auto sub_rec = CounterT::nametree_to_record_std(Nodetree::subnodes_t);
+    sub_records.push_back(sub_rec);
+
+    if constexpr (sizeof...(OtherNodetrees) > 0) {
+      nametree_to_sub_records<OtherNodetrees...>(sub_records);
+    }
+  }
+
+  template <typename... NodeTrees>
   static RecordStd<typename counters_type::optional_or_data_t::data_t>
   nametree_to_record_std(void) {
     RecordStd<typename counters_type::optional_or_data_t::data_t>
         top_counters_record;
     top_counters_record.name = name;
-    top_counters_record.data = data;
+    top_counters_record.value = data;
 
-    using CounterT = counter<Nodetree::node_name>;
-    auto rec = nametree_to_record_std<CounterT>(Nodetree::subnodes_t);
-    top_counters_record.sub_records[Nodetree::node_name] = rec;
-
-    if constexpr (sizeof...(OtherNodetrees) > 0) {
-      auto other_top_rec = nametree_to_record_std<OtherNodetrees...>();
-      top_counters_record.sub_records.insert(other_top_rec.sub_records.begin(),
-                                             other_top_rec.sub_records.end());
-    }
-
+    // sub-records
+    nametree_to_sub_records<NodeTrees...>(top_counters_record.sub_records);
     return top_counters_record;
   }
 };

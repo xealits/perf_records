@@ -283,27 +283,64 @@ class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb1-1"><a href="#c
 <div class="perf_records"> <details> <summary>
 <var class="perf_records_parameter" data-name="analysisID"><dfn>analysisID</dfn>
 = <data>NA</data></var> </summary> <div class="perf_records_nest">
+<details> <summary>
 <var class="perf_records_parameter" data-name="main"><dfn>main</dfn> =
+<data>0us</data></var> </summary> <div class="perf_records_nest">
+<var class="perf_records_parameter" data-name="setup"><dfn>setup</dfn> =
 <data>0us</data></var>
+<var class="perf_records_parameter" data-name="test_done"><dfn>test_done</dfn>
+= <data>100000us</data></var>
+<var class="perf_records_parameter" data-name="thread_joined"><dfn>thread_joined</dfn>
+= <data>201000us</data></var> </div> </details> <details> <summary>
 <var class="perf_records_parameter" data-name="thread"><dfn>thread</dfn>
-= <data>0us</data></var> </div> </details> </div></p>
+= <data>0us</data></var> </summary> <div class="perf_records_nest">
+<var class="perf_records_parameter" data-name="setup"><dfn>setup</dfn> =
+<data>0us</data></var> <details> <summary>
+<var class="perf_records_parameter" data-name="test_full"><dfn>test_full</dfn>
+= <data>200000us</data></var> </summary> <div class="perf_records_nest">
+<var class="perf_records_parameter" data-name="second_part"><dfn>second_part</dfn>
+= <data>100000us</data></var> </div> </details>
+<var class="perf_records_parameter" data-name="also_full"><dfn>also_full</dfn>
+= <data>200000us</data></var> </div> </details> </div> </details>
+</div></p>
 <p>And parse it to CSV:</p>
-<table style="width:25%;">
+<table style="width:96%;">
 <caption>The data of the whole session</caption>
 <colgroup>
-<col style="width: 11%" />
+<col style="width: 5%" />
+<col style="width: 8%" />
+<col style="width: 10%" />
 <col style="width: 13%" />
+<col style="width: 6%" />
+<col style="width: 11%" />
+<col style="width: 9%" />
+<col style="width: 11%" />
+<col style="width: 18%" />
 </colgroup>
 <thead>
 <tr class="header">
 <th>main</th>
+<th>main.setup</th>
+<th>main.test_done</th>
+<th>main.thread_joined</th>
 <th>thread</th>
+<th>thread.also_full</th>
+<th>thread.setup</th>
+<th>thread.test_full</th>
+<th>thread.test_full.second_part</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td>0us</td>
 <td>0us</td>
+<td>100000us</td>
+<td>201000us</td>
+<td>0us</td>
+<td>200000us</td>
+<td>0us</td>
+<td>200000us</td>
+<td>100000us</td>
 </tr>
 </tbody>
 </table>
