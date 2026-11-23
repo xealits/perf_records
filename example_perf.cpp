@@ -1,13 +1,13 @@
-#include <chrono>
 #include <iostream>
 #include <thread>
 
+#include "events_map.hpp"
 #include "perf_counters.hpp"
 #include "records.hpp"
-#include "known_events_gracemont.hpp"
+//#include "known_events_gracemont.hpp"
 
 using PerfCounter =
-    perf_counters::PerfCounter<known_events_gracemont>;
+    perf_counters::PerfCounter<perf_events_basic>;
 
 struct AppStats {
   unsigned long long counter{0};
@@ -44,13 +44,13 @@ Record<PerfCounter::CounterVal_t> translate_perf_counters(
 
 int main() {
   PerfCounter count1{};
-  // count1.add_counter("PERF_COUNT_HW_INSTRUCTIONS");
-  // count1.add_counter("PERF_COUNT_HW_CPU_CYCLES");
+  count1.add_counter("PERF_COUNT_HW_INSTRUCTIONS");
+  count1.add_counter("PERF_COUNT_HW_CPU_CYCLES");
   //count1.add_counter("cpu-cycles");
   //count1.add_counter("cache-references");
   // count1.add_counter("cache-misses");
-  count1.add_counter("CPU_CLK_UNHALTED.CORE_P"); //("cpu-cycles");
-  count1.add_counter("LONGEST_LAT_CACHE.REFERENCE"); //("cache-references");
+  //count1.add_counter("CPU_CLK_UNHALTED.CORE_P"); //("cpu-cycles");
+  //count1.add_counter("LONGEST_LAT_CACHE.REFERENCE"); //("cache-references");
 
   // count1.add_group(
   //     {"topdown-fe-bound", "topdown-retiring"});
@@ -60,18 +60,20 @@ int main() {
   //      "topdown-retiring"});
   // count1.add_counter("PERF_COUNT_HW_STALLED_CYCLES_BACKEND");
 
-  count1.add_group(
-      { "TOPDOWN_FE_BOUND.ALL",
-        "TOPDOWN_BE_BOUND.ALL",
-        "UOPS_RETIRED.ALL"
-      });
+  //count1.add_group(
+  //    { "TOPDOWN_FE_BOUND.ALL",
+  //      "TOPDOWN_BE_BOUND.ALL",
+  //      "UOPS_RETIRED.ALL"
+  //    });
 
   decltype(translate_perf_counters("n", PerfCounter{}.get_data())) bench_th;
   auto thr = std::thread([&bench_th](void) {
     PerfCounter count_th{};
-    count_th.add_counter("CPU_CLK_UNHALTED.CORE_P"); //("cpu-cycles");
-    count_th.add_counter("TOPDOWN_FE_BOUND.ALL");
-    count_th.add_counter("UOPS_RETIRED.ALL");
+    count_th.add_counter("PERF_COUNT_HW_INSTRUCTIONS");
+    count_th.add_counter("PERF_COUNT_HW_CPU_CYCLES");
+    //count_th.add_counter("CPU_CLK_UNHALTED.CORE_P"); //("cpu-cycles");
+    //count_th.add_counter("TOPDOWN_FE_BOUND.ALL");
+    //count_th.add_counter("UOPS_RETIRED.ALL");
 
     count_th.start_count();
     code_under_test();

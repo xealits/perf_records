@@ -5,29 +5,23 @@
 // set up perf
 #include <errno.h>
 #include <linux/perf_event.h>
+// #include <linux/hw_breakpoint.h>
+#include <asm/unistd.h>
 #include <sys/ioctl.h>
 #include <unistd.h>  // pid_t gettid(void)
 
+#include <cstdint>
 #include <cstring>
-// #include <linux/hw_breakpoint.h>
-#include <asm/unistd.h>
-
+#include <iostream>
 #include <map>
 #include <optional>
-#include <string>
 #include <vector>
 
 #include "events_map.hpp"
 
-// #ifndef KNOWN_EVENTS_MAP_CUSTOM
-// static PerfEventMap_t& known_events_map = known_events_map_example;
-// #endif
-
 namespace perf_counters {
 
-bool perf_counter_enabled = true;
-
-template <PerfEventMap_t& known_events_map = known_events_map_example>
+template <const PerfEventMap_t&... known_events_maps>
 class PerfCounter {
  public:
   using CounterFD_t = decltype(syscall(__NR_perf_event_open, 0, 0, 0, -1, 0));
@@ -196,7 +190,7 @@ class PerfCounter {
     std::cout << "PerfCounter::add_counter config=" << counter_config
               << " type=" << counter_type << "\n";
 
-    struct perf_event_attr pe{};
+    struct perf_event_attr pe {};
     memset(&pe, 0, sizeof(struct perf_event_attr));
     // pe.type     = UNCORE_IMC_TYPE;
     // pe.config   = UNCORE_IMC_EVENT_READ;
@@ -262,17 +256,34 @@ class PerfCounter {
     return new_counter_fd;
   }
 
+  std::optional<PerfEventDesc> find_event(const CounterName_t& event_s) {
+    std::optional<PerfEventDesc> res;
+    (
+        [&event_s, &res]() {
+          if (known_events_maps.find(event_s) != known_events_maps.end()) {
+            res = known_events_maps.at(event_s);
+          }
+        }(),
+        ...);
+
+    if (!res.has_value()) {
+      std::cerr << "PerfCounter::add_counter could not find " << event_s
+                << " in known events\n";
+      return std::nullopt;
+    }
+
+    return res;
+  }
+
   CounterFD_t add_counter(const CounterName_t& known_event_s,
                           std::optional<int> group_fd = std::nullopt) {
-    if (known_events_map.find(known_event_s) == known_events_map.end()) {
-      std::cerr << "PerfCounter::add_counter could not find " << known_event_s
-                << " in known events\n";
-
+    auto event_desc_opt = find_event(known_event_s);
+    if (!event_desc_opt.has_value()) {
       throw std::runtime_error("PerfCounter::add_counter could not find " +
                                known_event_s + " in known events");
-
       return -1;
     }
+    auto event_desc = *event_desc_opt;
 
     if (group_fd.has_value()) {
       std::cerr << "PerfCounter::add_counter adding event " << known_event_s
@@ -284,7 +295,6 @@ class PerfCounter {
                 << known_event_s << "\n";
     }
 
-    auto event_desc = known_events_map.at(known_event_s);
     auto new_counter_fd = add_counter(event_desc.perf_config, known_event_s,
                                       event_desc.perf_type, group_fd);
     return new_counter_fd;
@@ -303,8 +313,6 @@ class PerfCounter {
   }
 
   void start_count(void) {
-    if (!perf_counter_enabled) return;
-
     for (const auto& [group_fd, cids] : counter_groups_) {
       if (cids.size() > 1) {
         ioctl(group_fd, PERF_EVENT_IOC_RESET, PERF_IOC_FLAG_GROUP);
@@ -322,8 +330,6 @@ class PerfCounter {
   }
 
   void stop_count(void) {
-    if (!perf_counter_enabled) return;
-
     if (!counter_is_running) {
       return;
     }

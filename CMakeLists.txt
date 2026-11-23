@@ -29,8 +29,8 @@ target_include_directories(counters INTERFACE ${PROJECT_SOURCE_DIR}/)
 add_executable(example example.cpp)
 target_link_libraries(example PRIVATE perf_counters records)
 
-#add_executable(example example_pmu.cpp)
-#target_link_libraries(example_pmu PRIVATE perf_counters records)
+add_executable(example_perf example_perf.cpp)
+target_link_libraries(example_perf PRIVATE perf_counters records)
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
   add_test(
