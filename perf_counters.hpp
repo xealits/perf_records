@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "events_map.hpp"
+#include "records_std.hpp"
 
 namespace perf_counters {
 
@@ -101,7 +102,6 @@ class PerfCounter {
   }
 
   void read_counters(void) {
-    std::vector<CounterDesc> res;
     stop_count();
 
     for (const auto& [group_fd, cids] : counter_groups_) {
@@ -157,7 +157,6 @@ class PerfCounter {
           //
           auto& counter = counters_.at(counter_id);
           counter.c_val = counter_value;
-          // res.push_back(counter);
         }
       }
     }
@@ -257,22 +256,24 @@ class PerfCounter {
   }
 
   std::optional<PerfEventDesc> find_event(const CounterName_t& event_s) {
-    std::optional<PerfEventDesc> res;
-    (
-        [&event_s, &res]() {
+    std::optional<PerfEventDesc> ev_desc_opt;
+    ( // find the first matching event in the maps pack
+        [&event_s, &ev_desc_opt]() {
+          // return if the event has already been found
+          if (ev_desc_opt.has_value()) return;
           if (known_events_maps.find(event_s) != known_events_maps.end()) {
-            res = known_events_maps.at(event_s);
+            ev_desc_opt = known_events_maps.at(event_s);
           }
         }(),
         ...);
 
-    if (!res.has_value()) {
+    if (!ev_desc_opt.has_value()) {
       std::cerr << "PerfCounter::add_counter could not find " << event_s
                 << " in known events\n";
       return std::nullopt;
     }
 
-    return res;
+    return ev_desc_opt;
   }
 
   CounterFD_t add_counter(const CounterName_t& known_event_s,
@@ -352,6 +353,25 @@ class PerfCounter {
   AllCountersData get_data(void) {
     read_counters();
     return {.pid = pid_, .cpu = cpu_, .counters = counters_};
+  }
+
+  using RecordsStd = perf_records::RecordStd<CounterVal_t>;
+  RecordsStd to_records(void) {
+    read_counters();
+
+    RecordsStd rec;
+    rec.pid = pid_;
+    rec.cpu = cpu_;
+
+    for (const auto& [counter_id, counter_desc] : counters_) {
+      //
+      rec.sub_records.emplace_back();
+      auto& last_rec = rec.sub_records.back();
+      last_rec.name = counter_desc.c_name;
+      last_rec.value = counter_desc.c_val;
+    }
+
+    return rec;
   }
 };
 }  // namespace perf_counters
