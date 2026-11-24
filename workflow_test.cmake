@@ -1,4 +1,5 @@
-message(DEBUG "Given: CMD=${CMD} OUT=${OUT}")
+message(STATUS "> workflow_test.cmake is running a typical complete workflow session")
+message(STATUS "> workflow_test.cmake given: CMD=${CMD} OUT=${OUT}")
 
 execute_process(
     COMMAND ${CMD}

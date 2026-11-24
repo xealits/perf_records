@@ -20,7 +20,7 @@ set(CMAKE_COMPILE_WARNING_AS_ERROR ${perf_records_WERROR})
 # default warnings list for the development
 if(NOT DEFINED perf_records_WARNING_FLAGS)
   if(PROJECT_IS_TOP_LEVEL)
-    include(${CMAKE_CURRENT_LIST_DIR}/cmake/DefaultWarnings.cmake)
+    include(cmake/DefaultWarnings.cmake)
     perf_records_set_default_warnings(perf_records_WARNING_FLAGS)
   else()
     set(perf_records_WARNING_FLAGS "")
@@ -38,7 +38,7 @@ endif()
 message(STATUS "${PROJECT_NAME} > in directory ${CMAKE_CURRENT_LIST_DIR}")
 
 # main library targets
-add_subdirectory("include/perf_records")
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/include/perf_records")
 
 if(PROJECT_IS_TOP_LEVEL)
   message(STATUS "${PROJECT_NAME} > adding example targets in directory ${CMAKE_CURRENT_LIST_DIR}")
@@ -54,10 +54,10 @@ if(PROJECT_IS_TOP_LEVEL)
     add_test(
       NAME workflow_session_example
       COMMAND ${CMAKE_COMMAND}
-      -DSRC_DIR=${CMAKE_CURRENT_SOURCE_DIR}
+      -DSRC_DIR=${CMAKE_CURRENT_LIST_DIR}
       -DCMD=$<TARGET_FILE:example>
       -DOUT=${CMAKE_CURRENT_BINARY_DIR}/workflow_session_example_log.markdown
-      -P ${CMAKE_CURRENT_SOURCE_DIR}/workflow_test.cmake
+      -P ${CMAKE_CURRENT_LIST_DIR}/workflow_test.cmake
     )
   endif()
 endif()
