@@ -84,6 +84,7 @@ set(PANDOC_ARGS
     --from markdown-markdown_in_html_blocks+raw_html
     --citeproc
     --filter pandoc-csv2table
+    --css "${SRC_DIR}/pandoc_default_allow_table_overflow.css"
 )
 
 set(PANDOC_LOG_HTML "${OUT}.html")

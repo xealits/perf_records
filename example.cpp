@@ -78,7 +78,7 @@ int main() {
       perf_records::NameTreeNode<"setup">,
       perf_records::NameTreeNode<"test_done">,
       perf_records::NameTreeNode<"thread_joined">>();
-  //timing_main.print();
+  // timing_main.print();
 
   auto timing_thread = ThreadTimers::nametree_to_record_std<
       perf_records::NameTreeNode<"setup">,
@@ -86,7 +86,7 @@ int main() {
                                  perf_records::NameTreeNode<"second_part">>,
       // perf_records::NameTreeNode<"test_full">, // no need for this one
       perf_records::NameTreeNode<"also_full">>();
-  //timing_thread.print();
+  // timing_thread.print();
 
   decltype(timing_main) analysis_bench{"analysisID"};
   analysis_bench.sub_records.push_back(timing_main);
