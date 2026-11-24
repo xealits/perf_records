@@ -90,7 +90,7 @@ template <typename... Ts>
 struct TypePack {};
 
 template <typename... Ts>
-constexpr unsigned sizeof_pack(TypePack<Ts...> pack) {
+constexpr unsigned sizeof_pack(TypePack<Ts...>) {
   return sizeof...(Ts);
 }
 
@@ -277,7 +277,7 @@ struct Counters {
 
   template <typename... NodeTrees>
   static RecordStd<typename counters_type::optional_or_data_t::data_t>
-  nametree_to_record_std(const TypePack<NodeTrees...>& pack) {
+  nametree_to_record_std(const TypePack<NodeTrees...>&) {
     RecordStd<typename counters_type::optional_or_data_t::data_t>
         top_counters_record;
     top_counters_record.name = name;

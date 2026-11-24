@@ -92,6 +92,9 @@ int main() {
   analysis_bench.sub_records.push_back(timing_main);
   analysis_bench.sub_records.push_back(timing_thread);
 
+  // TODO: multiple-type records
+  std::cerr << "stats_main: " << stats_main.counter << "\n";
+
   std::cout << analysis_bench.html() << "\n";
 
   return 0;

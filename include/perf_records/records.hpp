@@ -11,7 +11,7 @@
 
 using RecordString_t = std::string;
 
-static std::string ind(unsigned lev = 1) {
+static inline std::string ind(unsigned lev = 1) {
   constexpr char ind[] = "  ";
   std::string res;
   for (unsigned num = 0; num < lev; num++) res += ind;

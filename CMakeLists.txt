@@ -1,10 +1,6 @@
 cmake_minimum_required(VERSION 3.28..4)
 project(perf_records LANGUAGES CXX)
 
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-  include(CTest)
-endif()
-
 # the cxx_standard if it is not set by the project user
 if (NOT DEFINED CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 23)
@@ -32,32 +28,36 @@ if(NOT DEFINED perf_records_WARNING_FLAGS)
 endif()
 
 # helper targets for the project build
-add_library(perf_records_warnnings INTERFACE)
-add_library(perf_records::warnings ALIAS perf_records_warnnings)
+add_library(perf_records_warnings INTERFACE)
+add_library(perf_records::warnings ALIAS perf_records_warnings)
 
 if(perf_records_WARNING_FLAGS)
-  target_compile_options(perf_records_warnnings INTERFACE ${perf_records_WARNING_FLAGS})
+  target_compile_options(perf_records_warnings INTERFACE ${perf_records_WARNING_FLAGS})
 endif()
 
 message(STATUS "${PROJECT_NAME} > in directory ${CMAKE_CURRENT_LIST_DIR}")
 
+# main library targets
 add_subdirectory("include/perf_records")
 
-message(STATUS "${PROJECT_NAME} > adding example targets in directory ${CMAKE_CURRENT_LIST_DIR}")
+if(PROJECT_IS_TOP_LEVEL)
+  message(STATUS "${PROJECT_NAME} > adding example targets in directory ${CMAKE_CURRENT_LIST_DIR}")
+  include(CTest)
 
-add_executable(example example.cpp)
-target_link_libraries(example PRIVATE perf_records::perf_counters perf_records::records)
+  add_executable(example example.cpp)
+  target_link_libraries(example PRIVATE perf_records::perf_counters perf_records::records perf_records::warnings)
 
-add_executable(example_perf example_perf.cpp)
-target_link_libraries(example_perf PRIVATE perf_records::perf_counters perf_records::records)
+  add_executable(example_perf example_perf.cpp)
+  target_link_libraries(example_perf PRIVATE perf_records::perf_counters perf_records::records perf_records::warnings)
 
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
-  add_test(
-    NAME workflow_session_example
-    COMMAND ${CMAKE_COMMAND}
-    -DSRC_DIR=${CMAKE_CURRENT_SOURCE_DIR}
-    -DCMD=$<TARGET_FILE:example>
-    -DOUT=${CMAKE_CURRENT_BINARY_DIR}/workflow_session_example_log.markdown
-    -P ${CMAKE_CURRENT_SOURCE_DIR}/workflow_test.cmake
-  )
+  if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
+    add_test(
+      NAME workflow_session_example
+      COMMAND ${CMAKE_COMMAND}
+      -DSRC_DIR=${CMAKE_CURRENT_SOURCE_DIR}
+      -DCMD=$<TARGET_FILE:example>
+      -DOUT=${CMAKE_CURRENT_BINARY_DIR}/workflow_session_example_log.markdown
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/workflow_test.cmake
+    )
+  endif()
 endif()
