@@ -1,0 +1,7 @@
+function(perf_records_set_default_warnings out_var)
+if(CMAKE_CXX_COMPILER_ID STREQUAL  "MSVC")
+  set(${out_var} /W4 /permissive- PARENT_SCOPE)
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
+  set(${out_var} -Wall -Wextra -Wpedantic PARENT_SCOPE)
+endif()
+endfunction()
