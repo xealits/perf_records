@@ -47,10 +47,10 @@ if(PROJECT_IS_TOP_LEVEL)
   include(CTest)
 
   add_executable(example example.cpp)
-  target_link_libraries(example PRIVATE perf_records::perf_counters perf_records::records_std perf_records::warnings)
+  target_link_libraries(example PRIVATE perf_records::perf_counters perf_records::records perf_records::warnings)
 
   add_executable(example_perf example_perf.cpp)
-  target_link_libraries(example_perf PRIVATE perf_records::perf_counters perf_records::records_std perf_records::warnings)
+  target_link_libraries(example_perf PRIVATE perf_records::perf_counters perf_records::records perf_records::warnings)
 
   if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
     add_test(

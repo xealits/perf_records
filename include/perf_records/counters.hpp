@@ -12,7 +12,7 @@
 #include <algorithm>
 #include <optional>
 
-#include "records_std.hpp"
+#include "records.hpp"
 
 namespace PERF_RECORDS_NAMESPACE_NAME {
 
@@ -276,9 +276,9 @@ struct Counters {
   };
 
   template <typename... NodeTrees>
-  static RecordStd<typename counters_type::optional_or_data_t::data_t>
+  static Record<typename counters_type::optional_or_data_t::data_t>
   nametree_to_record_std(const TypePack<NodeTrees...>&) {
-    RecordStd<typename counters_type::optional_or_data_t::data_t>
+    Record<typename counters_type::optional_or_data_t::data_t>
         top_counters_record;
     top_counters_record.name = name;
     top_counters_record.value = data;
@@ -294,7 +294,7 @@ struct Counters {
   template <typename Nodetree, typename... OtherNodetrees>
   static void nametree_to_sub_records(
       std::vector<
-          RecordStd<typename counters_type::optional_or_data_t::data_t>>&
+          Record<typename counters_type::optional_or_data_t::data_t>>&
           sub_records)
 
   {
@@ -308,9 +308,9 @@ struct Counters {
   }
 
   template <typename... NodeTrees>
-  static RecordStd<typename counters_type::optional_or_data_t::data_t>
+  static Record<typename counters_type::optional_or_data_t::data_t>
   nametree_to_record_std(void) {
-    RecordStd<typename counters_type::optional_or_data_t::data_t>
+    Record<typename counters_type::optional_or_data_t::data_t>
         top_counters_record;
     top_counters_record.name = name;
     top_counters_record.value = data;

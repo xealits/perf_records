@@ -18,7 +18,7 @@
 #include <vector>
 
 #include "events_map.hpp"
-#include "records_std.hpp"
+#include "records.hpp"
 
 namespace perf_counters {
 
@@ -355,11 +355,11 @@ class PerfCounter {
     return {.pid = pid_, .cpu = cpu_, .counters = counters_};
   }
 
-  using RecordsStd = perf_records::RecordStd<CounterVal_t>;
-  RecordsStd to_records(void) {
+  using Record = perf_records::Record<CounterVal_t>;
+  Record to_records(void) {
     read_counters();
 
-    RecordsStd rec;
+    Record rec;
     rec.pid = pid_;
     rec.cpu = cpu_;
 

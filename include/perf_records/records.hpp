@@ -77,7 +77,7 @@ std::string RecordToHtml(const RecordLike& record, unsigned lev = 0) {
 }
 
 template <typename ValueT>
-struct RecordStd {
+struct Record {
   using RecordString_t = std::string;
 
   RecordString_t name;
@@ -85,8 +85,8 @@ struct RecordStd {
   int cpu{-1};
 
   std::optional<ValueT> value = std::nullopt;
-  std::vector<RecordStd<ValueT>> sub_records{};
-  std::vector<RecordStd<ValueT>> conditions{};
+  std::vector<Record<ValueT>> sub_records{};
+  std::vector<Record<ValueT>> conditions{};
 
   std::string value_s(void) const {
     if (value) {
@@ -111,7 +111,7 @@ struct RecordStd {
     }
   }
 
-  friend std::ostream& operator<<(std::ostream& outs, const RecordStd<ValueT>& rec) {
+  friend std::ostream& operator<<(std::ostream& outs, const Record<ValueT>& rec) {
     rec.to_ostream(outs, 0);
     return outs;
   }
