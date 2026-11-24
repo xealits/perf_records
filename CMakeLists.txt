@@ -16,6 +16,7 @@ if(NOT DEFINED perf_records_WERROR)
   set(perf_records_WERROR ${PROJECT_IS_TOP_LEVEL})
 endif()
 set(CMAKE_COMPILE_WARNING_AS_ERROR ${perf_records_WERROR})
+message(STATUS "${PROJECT_NAME} > CMAKE_COMPILE_WARNING_AS_ERROR ${CMAKE_COMPILE_WARNING_AS_ERROR}")
 
 # default warnings list for the development
 if(NOT DEFINED perf_records_WARNING_FLAGS)
@@ -26,6 +27,7 @@ if(NOT DEFINED perf_records_WARNING_FLAGS)
     set(perf_records_WARNING_FLAGS "")
   endif()
 endif()
+message(STATUS "${PROJECT_NAME} > perf_records_WARNING_FLAGS ${perf_records_WARNING_FLAGS}")
 
 # helper targets for the project build
 add_library(perf_records_warnings INTERFACE)
@@ -45,10 +47,10 @@ if(PROJECT_IS_TOP_LEVEL)
   include(CTest)
 
   add_executable(example example.cpp)
-  target_link_libraries(example PRIVATE perf_records::perf_counters perf_records::records perf_records::warnings)
+  target_link_libraries(example PRIVATE perf_records::perf_counters perf_records::records_std perf_records::warnings)
 
   add_executable(example_perf example_perf.cpp)
-  target_link_libraries(example_perf PRIVATE perf_records::perf_counters perf_records::records perf_records::warnings)
+  target_link_libraries(example_perf PRIVATE perf_records::perf_counters perf_records::records_std perf_records::warnings)
 
   if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
     add_test(

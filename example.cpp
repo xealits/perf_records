@@ -3,7 +3,6 @@
 #include <thread>
 
 #include "counters.hpp"
-#include "records.hpp"
 
 using Clock = std::chrono::steady_clock;
 
@@ -18,20 +17,6 @@ using timers_t = perf_records::CountersType<
 
 using MainTimers = perf_records::Counters<"main", timers_t>;
 using ThreadTimers = perf_records::Counters<"thread", timers_t>;
-
-template <typename CountersT>
-auto translate_counters()
-
-{
-  Record<decltype(CountersT::data)> bench{CountersT::name};
-  // bench.pid = data.pid;
-  // bench.cpu = data.cpu;
-  // for (const auto& rec : data.counters) {
-  //   bench.subrecs.push_back(translate_perf_record(rec.second));
-  // }
-  bench.value = CountersT::data;
-  return bench;
-}
 
 struct AppStats {
   unsigned long long counter{0};
@@ -78,7 +63,7 @@ int main() {
       perf_records::NameTreeNode<"setup">,
       perf_records::NameTreeNode<"test_done">,
       perf_records::NameTreeNode<"thread_joined">>();
-  // timing_main.print();
+  std::cerr << timing_main;
 
   auto timing_thread = ThreadTimers::nametree_to_record_std<
       perf_records::NameTreeNode<"setup">,
@@ -86,7 +71,7 @@ int main() {
                                  perf_records::NameTreeNode<"second_part">>,
       // perf_records::NameTreeNode<"test_full">, // no need for this one
       perf_records::NameTreeNode<"also_full">>();
-  // timing_thread.print();
+  std::cerr << timing_thread;
 
   decltype(timing_main) analysis_bench{"analysisID"};
   analysis_bench.sub_records.push_back(timing_main);

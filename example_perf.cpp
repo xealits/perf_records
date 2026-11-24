@@ -19,7 +19,7 @@ auto code_under_test(void) {
   }
 
   using namespace std::chrono_literals;
-  std::this_thread::sleep_for(2s);
+  std::this_thread::sleep_for(0.1s);
 
   return stats;
 }

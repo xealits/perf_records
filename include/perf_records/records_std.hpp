@@ -84,9 +84,7 @@ struct RecordStd {
   pid_t pid{0};
   int cpu{-1};
 
-  std::optional<ValueT> value{};
-  // std::string name{};
-  // std::map<std::string, RecordStd<ValueT>> sub_records{};
+  std::optional<ValueT> value = std::nullopt;
   std::vector<RecordStd<ValueT>> sub_records{};
   std::vector<RecordStd<ValueT>> conditions{};
 
@@ -100,18 +98,22 @@ struct RecordStd {
       return "NA";
   }
 
-  void print(unsigned nesting = 0) const {
-    for (unsigned ind = 0; ind < nesting; ind++) std::cout << " ";
-    std::cout << "RecordStd"
-      << " " << name << " = ";
-    if (value.has_value()) std::cout << *value;
-    else std::cout << "NA";
-    std::cout << '\n';
-
-    std::cout << "RecordStd has " << sub_records.size() << " sub_records\n";
-    for (const auto& rec_std : sub_records) {
-      rec_std.print(nesting + 1);
+  void to_ostream(std::ostream& outs, unsigned nesting = 0) const {
+    for (unsigned nest = 0; nest < nesting; nest++) {
+      outs << " ";
     }
+
+    outs << name << " @ " << pid << " " << cpu << " : "
+         << value_s() << "\n";
+
+    for (const auto& subr : sub_records) {
+      subr.to_ostream(outs, nesting + 1);
+    }
+  }
+
+  friend std::ostream& operator<<(std::ostream& outs, const RecordStd<ValueT>& rec) {
+    rec.to_ostream(outs, 0);
+    return outs;
   }
 
   std::string html(size_t lev = 0) const {
