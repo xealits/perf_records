@@ -5,7 +5,7 @@ foreach(hdr perf_counters records counters)
   add_library(${target_name} INTERFACE "${CMAKE_CURRENT_LIST_DIR}/${hdr}.hpp")
   set_target_properties(${target_name} PROPERTIES EXPORT_NAME ${hdr})
   target_include_directories(${target_name} INTERFACE
-    "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/>"
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/../>"
     "$<INSTALL_INTERFACE:include>"
   )
   add_library(perf_records::${hdr} ALIAS ${target_name})

@@ -2,7 +2,7 @@
 #include <iostream>
 #include <thread>
 
-#include "counters.hpp"
+#include "perf_records/counters.hpp"
 
 using Clock = std::chrono::steady_clock;
 

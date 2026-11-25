@@ -1,8 +1,8 @@
 #include <iostream>
 #include <thread>
 
-#include "events_map.hpp"
-#include "perf_counters.hpp"
+#include "perf_records/events_map.hpp"
+#include "perf_records/perf_counters.hpp"
 // #include "known_events_gracemont.hpp"
 
 using PerfCounter = perf_counters::PerfCounter<perf_events_basic>;
