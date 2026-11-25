@@ -1,10 +1,9 @@
-# ../perf_records/master/
 if(NOT DEFINED SRC_DIR)
-  set(SRC_DIR "${CTEST_SCRIPT_DIRECTORY")
+  set(SRC_DIR "${CTEST_SCRIPT_DIRECTORY}")
 endif()
 
 set(CTEST_SOURCE_DIRECTORY "${SRC_DIR}")
-set(CTEST_BINARY_DIRECTORY "${CTEST_SOURCE_DIRECTORY}/build-ctest2")
+set(CTEST_BINARY_DIRECTORY "${CTEST_SOURCE_DIRECTORY}/script_ctest_build")
 
 set(CTEST_SITE "local")
 set(CTEST_BUILD_NAME "local-build")
@@ -13,16 +12,12 @@ set(CTEST_CMAKE_GENERATOR "Ninja")
 
 ctest_start("Workflow Test")
 
-ctest_configure(OPTIONS "-DCMAKE_C_COMPILER=clang;-DCMAKE_CXX_COMPILER=clang++")
-#(# -C Release
-#  SOURCE ${CTEST_SOURCE_DIRECTORY} BUILD ${CTEST_BINARY_DIRECTORY})
+ctest_configure(OPTIONS "-DCMAKE_CXX_COMPILER=clang++")
 
 ctest_build(TARGET "example")
 
-#ctest_build(# -C Release
-#  BUILD "${CTEST_BINARY_DIRECTORY}"
-#  TARGET "example"
-#  CONFIGURATION "Release"
-#)
-
-ctest_test(INCLUDE "^workflow_session_example$")
+ctest_test(
+  BUILD "${CTEST_BINARY_DIRECTORY}/examples"
+  PARALLEL_LEVEL 6
+  INCLUDE "^workflow_session_example$"
+)

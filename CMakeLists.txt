@@ -43,23 +43,6 @@ message(STATUS "${PROJECT_NAME} > in directory ${CMAKE_CURRENT_LIST_DIR}")
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/include/perf_records")
 
 if(PROJECT_IS_TOP_LEVEL)
-  message(STATUS "${PROJECT_NAME} > adding example targets in directory ${CMAKE_CURRENT_LIST_DIR}")
-  include(CTest)
-
-  add_executable(example example.cpp)
-  target_link_libraries(example PRIVATE perf_records::perf_counters perf_records::records perf_records::warnings)
-
-  add_executable(example_perf example_perf.cpp)
-  target_link_libraries(example_perf PRIVATE perf_records::perf_counters perf_records::records perf_records::warnings)
-
-  if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
-    add_test(
-      NAME workflow_session_example
-      COMMAND ${CMAKE_COMMAND}
-      -DSRC_DIR=${CMAKE_CURRENT_LIST_DIR}
-      -DCMD=$<TARGET_FILE:example>
-      -DOUT=${CMAKE_CURRENT_BINARY_DIR}/workflow_session_example_log.markdown
-      -P ${CMAKE_CURRENT_LIST_DIR}/workflow_test.cmake
-    )
-  endif()
+  message(STATUS "${PROJECT_NAME} > adding examples directory ${CMAKE_CURRENT_LIST_DIR}/examples")
+  add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/examples")
 endif()
