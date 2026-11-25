@@ -6,7 +6,9 @@ if (NOT DEFINED CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 23)
 endif()
 
-include(cmake/GitIgnoreBuilds.cmake)
+if(PROJECT_IS_TOP_LEVEL)
+  include(cmake/GitIgnoreBuilds.cmake)
+endif()
 
 # project config settings
 # override these variable to change the config
