@@ -13,6 +13,17 @@ endif()
 # project config settings
 # override these variable to change the config
 
+set(perf_records_NAMESPACE_NAME "" CACHE STRING "Set the namespace name for the library to avoid name collisions")
+if(perf_records_NAMESPACE_NAME)
+  set(perf_records_NAMESPACE_NAME_DEFINE PERF_RECORDS_NAMESPACE_NAME="${perf_records_NAMESPACE_NAME}")
+else()
+  set(perf_records_NAMESPACE_NAME_DEFINE "")
+endif()
+
+if(NOT DEFINED perf_records_WERROR)
+  set(perf_records_WERROR ${PROJECT_IS_TOP_LEVEL})
+endif()
+
 # compile warnings as error
 if(NOT DEFINED perf_records_WERROR)
   set(perf_records_WERROR ${PROJECT_IS_TOP_LEVEL})
@@ -32,11 +43,17 @@ endif()
 message(STATUS "${PROJECT_NAME} > perf_records_WARNING_FLAGS ${perf_records_WARNING_FLAGS}")
 
 # helper targets for the project build
-add_library(perf_records_warnings INTERFACE)
-add_library(perf_records::warnings ALIAS perf_records_warnings)
+add_library(perf_records_compile_settings INTERFACE)
+add_library(perf_records::compile_settings ALIAS perf_records_compile_settings)
 
 if(perf_records_WARNING_FLAGS)
-  target_compile_options(perf_records_warnings INTERFACE ${perf_records_WARNING_FLAGS})
+  message(STATUS "${PROJECT_NAME} > setting warning flags: ${perf_records_WARNING_FLAGS}")
+  target_compile_options(perf_records_compile_settings INTERFACE ${perf_records_WARNING_FLAGS})
+endif()
+
+if(perf_records_NAMESPACE_NAME_DEFINE)
+  message(STATUS "${PROJECT_NAME} > setting definitions: ${perf_records_NAMESPACE_NAME_DEFINE}")
+  target_compile_definitions(perf_records_compile_settings INTERFACE ${perf_records_NAMESPACE_NAME_DEFINE})
 endif()
 
 message(STATUS "${PROJECT_NAME} > in directory ${CMAKE_CURRENT_LIST_DIR}")

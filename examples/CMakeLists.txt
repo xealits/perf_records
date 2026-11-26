@@ -1,10 +1,10 @@
 message(STATUS "${PROJECT_NAME} > adding example targets in ${CMAKE_CURRENT_LIST_DIR}/")
 
 add_executable(example example.cpp)
-target_link_libraries(example PRIVATE perf_records::perf_counters perf_records::records perf_records::warnings)
+target_link_libraries(example PRIVATE perf_records::perf_counters perf_records::records perf_records::compile_settings)
 
 add_executable(example_perf example_perf.cpp)
-target_link_libraries(example_perf PRIVATE perf_records::perf_counters perf_records::records perf_records::warnings)
+target_link_libraries(example_perf PRIVATE perf_records::perf_counters perf_records::records perf_records::compile_settings)
 
 include(CTest)
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
