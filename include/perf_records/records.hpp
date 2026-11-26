@@ -16,15 +16,16 @@
 namespace PERF_RECORDS_NAMESPACE_NAME {
 
 namespace impl {
-static std::string ind(size_t lev = 1) {
-  constexpr char ind_char = ' ';
-  constexpr size_t ind_num_chars = 2;
-  std::string res(ind_num_chars * lev, ind_char);
-  return res;
-}
 
 template <typename RecordLike>
 std::string RecordToHtml(const RecordLike& record, unsigned lev = 0) {
+  auto ind = [](size_t lev = 1) -> std::string {
+    constexpr char ind_char = ' ';
+    constexpr size_t ind_num_chars = 2;
+    std::string res(ind_num_chars * lev, ind_char);
+    return res;
+  };
+
   const auto& column_name = record.name;
   const auto& value_s = record.value_s();
   const auto& subrecs = record.sub_records;
@@ -118,7 +119,9 @@ struct Record {
     return outs;
   }
 
-  std::string html(size_t lev = 0) const { return impl::RecordToHtml(*this, lev); }
+  std::string html(size_t lev = 0) const {
+    return impl::RecordToHtml(*this, lev);
+  }
 };
 
 };  // namespace PERF_RECORDS_NAMESPACE_NAME
