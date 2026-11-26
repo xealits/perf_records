@@ -155,6 +155,15 @@ struct EmptyT {};
 
 using CounterNameT = impl::FixedString<32>;
 
+// STMP tracker of the enabled state of the Counters
+// TODO: just a single name is wrong - the counters are nested
+// pass the full type or whatever - I'm just testing it now
+template <CounterNameT name>
+struct CountersEnabledState {
+  friend auto is_disabled(
+      CountersEnabledState);  // declare a friend function per type
+};
+
 // the manual way to pull the info from the templated class
 // by a given nested tree of template parameters
 // ideally, this should be done with Cpp26 reflections
@@ -183,13 +192,28 @@ struct Counters {
       impl::CountersType<this_t, typename counters_type::optional_or_data_t,
                          counters_type::optional_params>>;
 
+  // test whether it is disabled
+  template <auto seed =
+                [] {}>  // new lambda type on each is_disabled<> instance
+  static constexpr inline bool is_disabled_ =
+      requires { is_disabled(CountersEnabledState<t_name>{}); };
+
+  template <typename T>
+  struct Disabler {
+    // define the friend function to set the STMP state
+    friend auto is_disabled(CountersEnabledState<t_name>) { return; }
+  };
+
   template <typename InpT>
   static void set(const InpT& inp) {
+    if constexpr (is_disabled_<>) return;
     data = counters_type::input_proc(inp);
   }
 
   template <typename InpT>
   static void increment(const InpT& inp) {
+    if constexpr (is_disabled_<>) return;
+
     if constexpr (counters_type::optional_or_data_t::using_optional) {
       if (!data.has_value()) {
         data.emplace();  // initialize the data
@@ -212,6 +236,8 @@ struct Counters {
 
   template <typename InpT>
   static auto increment_current_diff(const InpT& inp_offset) {
+    if constexpr (is_disabled_<>) decltype(get_current()){};
+
     auto current = get_current();
     const auto diff = current - inp_offset;
     increment(diff);
@@ -243,6 +269,8 @@ struct Counters {
         : count_at_scope_start{start_count} {};
 
     ~ScopeCounter() {
+      if constexpr (is_disabled_<>) return;
+
       const auto increment_in_scope =
           counters_type::current_count_getter() - count_at_scope_start;
       increment(increment_in_scope);
@@ -267,15 +295,17 @@ struct Counters {
           count_at_scope_start{start_count} {};
 
     ~ScopeCounterConditional() {
-      if (m_do_increment_counter) {
-        const auto increment_in_scope =
-            counters_type::current_count_getter() - count_at_scope_start;
-        increment(increment_in_scope);
+      if constexpr (is_disabled_<>) return;
 
-        if constexpr (log_increments_t) {
-          std::cout << name << " ScopeCounterConditional increment = "
-                    << increment_in_scope << "\n";
-        }
+      if (!m_do_increment_counter) return;
+
+      const auto increment_in_scope =
+          counters_type::current_count_getter() - count_at_scope_start;
+      increment(increment_in_scope);
+
+      if constexpr (log_increments_t) {
+        std::cout << name << " ScopeCounterConditional increment = "
+                  << increment_in_scope << "\n";
       }
     }
   };
@@ -293,6 +323,7 @@ struct Counters {
       nametree_to_sub_records<NodeTrees...>(top_counters_record.sub_records);
     }
 
+    print_is_disabled();
     return top_counters_record;
   }
 
@@ -321,7 +352,15 @@ struct Counters {
 
     // sub-records
     nametree_to_sub_records<NodeTrees...>(top_counters_record.sub_records);
+
+    print_is_disabled();
     return top_counters_record;
+  }
+
+  static void print_is_disabled(void) {
+    // TODO: just testing the STMP disabling:
+    std::cout << "Counters " << t_name
+              << " is_disabled = " << is_disabled_<> << "\n";
   }
 };
 

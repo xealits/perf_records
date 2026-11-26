@@ -18,6 +18,9 @@ using timers_t = perf_records::CountersType<
 using MainTimers = perf_records::Counters<"main", timers_t>;
 using ThreadTimers = perf_records::Counters<"thread", timers_t>;
 
+// TODO: testing STMP disabling individual counters
+[[maybe_unused]] MainTimers::counter<"test_done">::Disabler<void> disable_test_done;
+
 struct AppStats {
   unsigned long long counter{0};
 };
