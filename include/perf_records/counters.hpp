@@ -5,16 +5,15 @@
 /// So that the caller site defines the counters, without declarations.
 /// To implement this, it is based on template instantiations.
 
-#ifndef PERF_RECORDS_NAMESPACE_NAME
-#define PERF_RECORDS_NAMESPACE_NAME perf_records
-#endif
-
 #include <algorithm>
 #include <optional>
 
+#include "namespace_name.hpp"
 #include "records.hpp"
 
 namespace PERF_RECORDS_NAMESPACE_NAME {
+
+namespace impl {
 
 template <size_t t_str_size>
 struct FixedString {
@@ -84,8 +83,6 @@ struct FixedString {
   }
 };
 
-using CounterNameT = FixedString<32>;
-
 template <typename... Ts>
 struct TypePack {};
 
@@ -93,15 +90,6 @@ template <typename... Ts>
 constexpr unsigned sizeof_pack(TypePack<Ts...>) {
   return sizeof...(Ts);
 }
-
-// the manual way to pull the info from the templated class
-// by a given nested tree of template parameters
-// ideally, this should be done with Cpp26 reflections
-template <CounterNameT name, typename... Subnodes>
-struct NameTreeNode {
-  static constexpr inline CounterNameT node_name = name;
-  static constexpr inline TypePack<Subnodes...> subnodes_t{};
-};
 
 template <class T, template <class> class U>
 inline constexpr bool is_instance_of_v = std::false_type{};
@@ -146,7 +134,6 @@ struct CountersTypeOptionalParameters {
 template <typename ParentCounterT, typename CounterOptionalOrDataT,
           CountersTypeOptionalParameters params =
               CountersTypeOptionalParameters<>{}>
-
 struct CountersType {
   using parent_t = ParentCounterT;
   using optional_or_data_t =
@@ -164,6 +151,24 @@ struct CountersType {
 
 // a starting point for parent types
 struct EmptyT {};
+};  // namespace impl
+
+using CounterNameT = impl::FixedString<32>;
+
+// the manual way to pull the info from the templated class
+// by a given nested tree of template parameters
+// ideally, this should be done with Cpp26 reflections
+template <CounterNameT name, typename... Subnodes>
+struct NameTreeNode {
+  static constexpr inline CounterNameT node_name = name;
+  static constexpr inline impl::TypePack<Subnodes...> subnodes_t{};
+};
+
+template <typename CounterOptionalOrDataT,
+          impl::CountersTypeOptionalParameters params =
+              impl::CountersTypeOptionalParameters<>{}>
+using CountersType =
+    impl::CountersType<impl::EmptyT, CounterOptionalOrDataT, params>;
 
 template <CounterNameT t_name, typename counters_type>
 struct Counters {
@@ -173,10 +178,10 @@ struct Counters {
   static inline counters_type::optional_or_data_t::type data{};
 
   template <CounterNameT subcount_name>
-  using counter =
-      Counters<subcount_name,
-               CountersType<this_t, typename counters_type::optional_or_data_t,
-                            counters_type::optional_params>>;
+  using counter = Counters<
+      subcount_name,
+      impl::CountersType<this_t, typename counters_type::optional_or_data_t,
+                         counters_type::optional_params>>;
 
   template <typename InpT>
   static void set(const InpT& inp) {
@@ -277,7 +282,7 @@ struct Counters {
 
   template <typename... NodeTrees>
   static Record<typename counters_type::optional_or_data_t::data_t>
-  nametree_to_record_std(const TypePack<NodeTrees...>&) {
+  nametree_to_record_std(const impl::TypePack<NodeTrees...>&) {
     Record<typename counters_type::optional_or_data_t::data_t>
         top_counters_record;
     top_counters_record.name = name;
@@ -293,8 +298,7 @@ struct Counters {
 
   template <typename Nodetree, typename... OtherNodetrees>
   static void nametree_to_sub_records(
-      std::vector<
-          Record<typename counters_type::optional_or_data_t::data_t>>&
+      std::vector<Record<typename counters_type::optional_or_data_t::data_t>>&
           sub_records)
 
   {

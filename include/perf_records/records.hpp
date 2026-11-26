@@ -15,6 +15,7 @@
 
 namespace PERF_RECORDS_NAMESPACE_NAME {
 
+namespace impl {
 static std::string ind(size_t lev = 1) {
   constexpr char ind_char = ' ';
   constexpr size_t ind_num_chars = 2;
@@ -75,6 +76,7 @@ std::string RecordToHtml(const RecordLike& record, unsigned lev = 0) {
   if (lev == 0) res += "</div>\n";
   return res;
 }
+};  // namespace impl
 
 template <typename ValueT>
 struct Record {
@@ -103,22 +105,20 @@ struct Record {
       outs << " ";
     }
 
-    outs << name << " @ " << pid << " " << cpu << " : "
-         << value_s() << "\n";
+    outs << name << " @ " << pid << " " << cpu << " : " << value_s() << "\n";
 
     for (const auto& subr : sub_records) {
       subr.to_ostream(outs, nesting + 1);
     }
   }
 
-  friend std::ostream& operator<<(std::ostream& outs, const Record<ValueT>& rec) {
+  friend std::ostream& operator<<(std::ostream& outs,
+                                  const Record<ValueT>& rec) {
     rec.to_ostream(outs, 0);
     return outs;
   }
 
-  std::string html(size_t lev = 0) const {
-    return RecordToHtml(*this, lev);
-  }
+  std::string html(size_t lev = 0) const { return impl::RecordToHtml(*this, lev); }
 };
 
 };  // namespace PERF_RECORDS_NAMESPACE_NAME

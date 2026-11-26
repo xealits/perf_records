@@ -5,7 +5,7 @@
 #include "perf_records/perf_counters.hpp"
 // #include "known_events_gracemont.hpp"
 
-using PerfCounter = perf_counters::PerfCounter<perf_events_basic>;
+using PerfCounter = perf_records::PerfCounter<perf_records::perf_events_basic>;
 
 struct AppStats {
   unsigned long long counter{0};

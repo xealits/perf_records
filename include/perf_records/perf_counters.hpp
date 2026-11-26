@@ -18,13 +18,13 @@
 #include <vector>
 
 #include "events_map.hpp"
+#include "namespace_name.hpp"
 #include "records.hpp"
 
-namespace perf_counters {
+namespace PERF_RECORDS_NAMESPACE_NAME {
 
 template <const PerfEventMap_t&... known_events_maps>
 class PerfCounter {
- public:
   using CounterFD_t = decltype(syscall(__NR_perf_event_open, 0, 0, 0, -1, 0));
   using CounterId_t = uint64_t;
   using CounterVal_t = uint64_t;
@@ -39,13 +39,33 @@ class PerfCounter {
     PerfEventAttr_type_t c_type{};
   };
 
+  std::optional<PerfEventDesc> find_event(const CounterName_t& event_s) {
+    std::optional<PerfEventDesc> ev_desc_opt;
+    (  // find the first matching event in the maps pack
+        [&event_s, &ev_desc_opt]() {
+          // return if the event has already been found
+          if (ev_desc_opt.has_value()) return;
+          if (known_events_maps.find(event_s) != known_events_maps.end()) {
+            ev_desc_opt = known_events_maps.at(event_s);
+          }
+        }(),
+        ...);
+
+    if (!ev_desc_opt.has_value()) {
+      std::cerr << "PerfCounter::add_counter could not find " << event_s
+                << " in known events\n";
+      return std::nullopt;
+    }
+
+    return ev_desc_opt;
+  }
+
   struct AllCountersData {
     pid_t pid{0};
     int cpu{-1};
     std::map<CounterId_t, CounterDesc> counters;
   };
 
- private:
   bool counter_is_running{false};
   // int group_fd{-1};  // this fd will be the counter group fd
   std::vector<CounterFD_t> counters_fds;
@@ -107,7 +127,7 @@ class PerfCounter {
     for (const auto& [group_fd, cids] : counter_groups_) {
       auto nread = read(group_fd, &(buf[0]), sizeof(buf));
       if (nread <= 0) {
-        std::cout << "PerfCounter::read_counters read no data " << nread
+        std::cerr << "PerfCounter::read_counters read no data " << nread
                   << " returning\n";
         return;
       }
@@ -116,7 +136,7 @@ class PerfCounter {
         struct read_format_single* pdata =
             reinterpret_cast<struct read_format_single*>(buf);
 
-        std::cout << "PerfCounter::read_counters counter ran as " << std::dec
+        std::cerr << "PerfCounter::read_counters counter ran as " << std::dec
                   << pdata->time_running << " / " << pdata->time_enabled
                   << "\n";
 
@@ -143,7 +163,7 @@ class PerfCounter {
               "buffer");
         }
 
-        std::cout << "PerfCounter::read_counters group ran as " << std::dec
+        std::cerr << "PerfCounter::read_counters group ran as " << std::dec
                   << pdata->time_running << " / " << pdata->time_enabled
                   << "\n";
 
@@ -151,7 +171,7 @@ class PerfCounter {
           const auto& counter_res = pdata->values[count_i];
           const CounterId_t& counter_id = counter_res.id;
           const CounterVal_t& counter_value = counter_res.value;
-          std::cout << "PerfCounter::read_counters " << counter_id << " "
+          std::cerr << "PerfCounter::read_counters " << counter_id << " "
                     << counter_value << "\n";
 
           //
@@ -186,7 +206,7 @@ class PerfCounter {
                    std::optional<int> group_fd_opt = std::nullopt)
 
   {
-    std::cout << "PerfCounter::add_counter config=" << counter_config
+    std::cerr << "PerfCounter::add_counter config=" << counter_config
               << " type=" << counter_type << "\n";
 
     struct perf_event_attr pe {};
@@ -253,27 +273,6 @@ class PerfCounter {
     }
 
     return new_counter_fd;
-  }
-
-  std::optional<PerfEventDesc> find_event(const CounterName_t& event_s) {
-    std::optional<PerfEventDesc> ev_desc_opt;
-    ( // find the first matching event in the maps pack
-        [&event_s, &ev_desc_opt]() {
-          // return if the event has already been found
-          if (ev_desc_opt.has_value()) return;
-          if (known_events_maps.find(event_s) != known_events_maps.end()) {
-            ev_desc_opt = known_events_maps.at(event_s);
-          }
-        }(),
-        ...);
-
-    if (!ev_desc_opt.has_value()) {
-      std::cerr << "PerfCounter::add_counter could not find " << event_s
-                << " in known events\n";
-      return std::nullopt;
-    }
-
-    return ev_desc_opt;
   }
 
   CounterFD_t add_counter(const CounterName_t& known_event_s,
@@ -374,4 +373,4 @@ class PerfCounter {
     return rec;
   }
 };
-}  // namespace perf_counters
+}  // namespace PERF_RECORDS_NAMESPACE_NAME

@@ -7,7 +7,7 @@
 using Clock = std::chrono::steady_clock;
 
 using timers_t = perf_records::CountersType<
-    perf_records::EmptyT, std::chrono::microseconds,
+    std::chrono::microseconds,
     {.input_proc =
          [](const auto& duration) {
            return std::chrono::duration_cast<std::chrono::milliseconds>(
