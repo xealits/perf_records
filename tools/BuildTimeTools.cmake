@@ -4,20 +4,27 @@ message(STATUS "${PROJECT_NAME} > BuildTimeTools perf_records_setup_dump_perfmon
 include(ExternalProject)
 
 # the build tools are kept in an isolated Release cache
-set(TOOLS_CACHE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.build-tools/dump_perfmon")
-set(TOOL_BIN_DIR    "${TOOLS_CACHE_DIR}/bin")
+set(TOOLS_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.build-tools/")
+set(TOOL_CACHE_DIR "${TOOLS_BUILD_DIR}/dump_perfmon")
+set(TOOL_BIN_DIR    "${TOOL_CACHE_DIR}/bin")
 set(GEN_PMU_EXE     "${TOOL_BIN_DIR}/dump_perfmon${CMAKE_EXECUTABLE_SUFFIX}")
 
+# gitignore all build-tools
+if(PROJECT_IS_TOP_LEVEL)
+  file(WRITE "${TOOLS_BUILD_DIR}/.gitignore" "*")
+endif()
+
 ExternalProject_Add(pmu_tool_proj
-    PREFIX     "${TOOLS_CACHE_DIR}"
+    PREFIX     "${TOOL_CACHE_DIR}"
     SOURCE_DIR "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/dump_perfmon"
-    BINARY_DIR "${TOOLS_CACHE_DIR}/build"
-    STAMP_DIR  "${TOOLS_CACHE_DIR}/stamp"
+    BINARY_DIR "${TOOL_CACHE_DIR}/build"
+    STAMP_DIR  "${TOOL_CACHE_DIR}/stamp"
     CMAKE_ARGS
         -DCMAKE_BUILD_TYPE=Release
+        -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+        -Dgen_pmu_tool_WRITE_CLANGD_COMPILATION_DATABASE=ON
         -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${TOOL_BIN_DIR}
         -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=${TOOL_BIN_DIR}
-        -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG=${TOOL_BIN_DIR}
     BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --config Release
     INSTALL_COMMAND ""
     BUILD_ALWAYS TRUE

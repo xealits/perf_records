@@ -1,8 +1,19 @@
 cmake_minimum_required(VERSION 3.16)
 project(gen_pmu_tool LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+if (NOT DEFINED CMAKE_CXX_STANDARD)
+    set(CMAKE_CXX_STANDARD 17)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+endif()
+
+# dump clangd config for the IDEs to find the compile_commands.json
+if(${PROJECT_NAME}_WRITE_CLANGD_COMPILATION_DATABASE AND NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.clangd")
+    message(STATUS "${PROJECT_NAME} > writing ${CMAKE_CURRENT_SOURCE_DIR}/.clangd")
+    file(WRITE "${CMAKE_CURRENT_SOURCE_DIR}/.clangd"
+"CompileFlags:
+  CompilationDatabase: ${CMAKE_BINARY_DIR}
+")
+endif()
 
 # TODO: check this
 ## Cache downloaded archives outside the build folder so clean rebuilds don't re-download
@@ -20,5 +31,6 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(json)
 
+message(STATUS "${PROJECT_NAME} > adding the tool executable dump_perfmon")
 add_executable(dump_perfmon dump_perfmon.cpp)
 target_link_libraries(dump_perfmon PRIVATE nlohmann_json::nlohmann_json)
