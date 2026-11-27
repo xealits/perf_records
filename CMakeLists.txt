@@ -24,6 +24,28 @@ if(NOT DEFINED perf_records_WERROR)
   set(perf_records_WERROR ${PROJECT_IS_TOP_LEVEL})
 endif()
 
+# call dump_perfmon.py to create a header with a map of RAW perf events from Intel's perfmon JSON maps
+set(perf_records_dump_perfmon "" CACHE STRING "Dump Intel PMU events for the given architecture in perfmon jsons (e.g. GenuineIntel-6-BE)")
+if(perf_records_dump_perfmon)
+  set(DUMP_PERFMON_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/dump_perfmon.py")
+  set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${DUMP_PERFMON_SCRIPT}")
+  set(GENERATED_HEADER "${CMAKE_CURRENT_LIST_DIR}/include/perf_records/events_map_raw.hpp")
+
+  find_package(Python3 REQUIRED COMPONENTS Interpreter)
+  execute_process(
+    COMMAND
+    "${Python3_EXECUTABLE}" "${DUMP_PERFMON_SCRIPT}"
+    "${perf_records_dump_perfmon}" perf_events_raw
+    "${GENERATED_HEADER}"
+    WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}"
+    RESULT_VARIABLE dump_perfmon_result
+  )
+
+  if(NOT dump_perfmon_result EQUAL 0)
+    message(FATAL "${PROJECT_NAME} > dump_perfmon.py ${perf_records_dump_perfmon} raw_events > ${GENERATED_HEADER} failed")
+  endif()
+endif()
+
 # compile warnings as error
 if(NOT DEFINED perf_records_WERROR)
   set(perf_records_WERROR ${PROJECT_IS_TOP_LEVEL})
@@ -56,9 +78,8 @@ if(perf_records_NAMESPACE_NAME_DEFINE)
   target_compile_definitions(perf_records_compile_settings INTERFACE ${perf_records_NAMESPACE_NAME_DEFINE})
 endif()
 
-message(STATUS "${PROJECT_NAME} > in directory ${CMAKE_CURRENT_LIST_DIR}")
-
 # main library targets
+message(STATUS "${PROJECT_NAME} > in directory ${CMAKE_CURRENT_LIST_DIR} adding include/perf_records")
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/include/perf_records")
 
 if(PROJECT_IS_TOP_LEVEL)

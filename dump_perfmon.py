@@ -18,6 +18,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Dump perfmon records')
     parser.add_argument('model', help='Intel CPU model')
     parser.add_argument('map_symbol', help='Event map symbol name in the generated header')
+    parser.add_argument('out_file', help='Path to the output header file')
     return parser.parse_args()
 
 def update_events_dict(dest, events, event_type):
@@ -50,10 +51,15 @@ def get_cpu_events(model, perfmon_dir=Path('./intel_perfmon')):
 header_template = """
 #pragma once
 #include "events_map.hpp"
+#include "namespace_name.hpp"
+
+namespace PERF_RECORDS_NAMESPACE_NAME {{
 
 PerfEventMap_t {map_symbol} = {{
   {event_data}
 }};
+
+}};  // namespace PERF_RECORDS_NAMESPACE_NAME
 """
 
 map_data_template = """\
@@ -84,10 +90,14 @@ def main():
 
     event_data_string = ',\n  '.join(header_events_strings)
     #print(escape_braces(event_data_string))
-    print(header_template.format(map_symbol=args.map_symbol,
-                                 event_data=event_data_string))
 
-    logger.info(f"Dumped {len(cpu_events)} events for model {args.model}")
+    logger.info(f"Got {len(cpu_events)} events for model {args.model}")
+
+    out_file = header_template.format(map_symbol=args.map_symbol,
+                                 event_data=event_data_string)
+
+    with open(args.out_file, 'w') as outf:
+        outf.write(out_file)
 
 if __name__ == '__main__':
     main()
