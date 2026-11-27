@@ -9,6 +9,8 @@ target_link_libraries(example_perf_basic PRIVATE perf_records::perf_counters per
 if(perf_records_dump_perfmon STREQUAL "GenuineIntel-6-BE")
     message(STATUS "${PROJECT_NAME} > adding Gracemont GenuineIntel-6-BE example")
     add_executable(example_perf_gracemont example_perf_gracemont.cpp)
+    # do not forget to add the gen header to the sources - to trigger the generation:
+    target_sources(example_perf_gracemont PRIVATE "${GENERATED_HEADER}")
     target_link_libraries(example_perf_gracemont PRIVATE perf_records::perf_counters perf_records::records perf_records::compile_settings)
 endif()
 

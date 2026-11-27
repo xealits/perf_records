@@ -27,24 +27,29 @@ endif()
 # call dump_perfmon.py to create a header with a map of RAW perf events from Intel's perfmon JSON maps
 set(perf_records_dump_perfmon "" CACHE STRING "Dump Intel PMU events for the given architecture in perfmon jsons (e.g. GenuineIntel-6-BE)")
 if(perf_records_dump_perfmon)
-  set(DUMP_PERFMON_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/dump_perfmon.py")
-  set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${DUMP_PERFMON_SCRIPT}")
-  set(GENERATED_HEADER "${CMAKE_CURRENT_LIST_DIR}/include/perf_records/events_map_raw.hpp")
+  message(STATUS "${PROJECT_NAME} > dumping perfmon info for CPUID Family-Model: ${perf_records_dump_perfmon}")
+  #set(DUMP_PERFMON_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/dump_perfmon.py")
+  #set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${DUMP_PERFMON_SCRIPT}")
+  #set(GENERATED_HEADER "${CMAKE_CURRENT_LIST_DIR}/include/perf_records/events_map_raw.hpp")
+  set(GENERATED_HEADER "${CMAKE_CURRENT_LIST_DIR}/include/perf_records/events_map_raw_testing.hpp")
 
-  find_package(Python3 REQUIRED COMPONENTS Interpreter)
-  execute_process(
-    COMMAND
-    "${Python3_EXECUTABLE}" "${DUMP_PERFMON_SCRIPT}"
-    "${CMAKE_CURRENT_LIST_DIR}/intel_perfmon/"
-    "${perf_records_dump_perfmon}" perf_events_raw
-    "${GENERATED_HEADER}"
-    WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}"
-    RESULT_VARIABLE dump_perfmon_result
-  )
+  #find_package(Python3 REQUIRED COMPONENTS Interpreter)
+  #execute_process(
+  #  COMMAND
+  #  "${Python3_EXECUTABLE}" "${DUMP_PERFMON_SCRIPT}"
+  #  "${CMAKE_CURRENT_LIST_DIR}/intel_perfmon/"
+  #  "${perf_records_dump_perfmon}" perf_events_raw
+  #  "${GENERATED_HEADER}"
+  #  WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}"
+  #  RESULT_VARIABLE dump_perfmon_result
+  #)
 
-  if(NOT dump_perfmon_result EQUAL 0)
-    message(FATAL "${PROJECT_NAME} > dump_perfmon.py ${perf_records_dump_perfmon} raw_events > ${GENERATED_HEADER} failed")
-  endif()
+  #if(NOT dump_perfmon_result EQUAL 0)
+  #  message(FATAL "${PROJECT_NAME} > dump_perfmon.py ${perf_records_dump_perfmon} raw_events > ${GENERATED_HEADER} failed")
+  #endif()
+
+  include(tools/BuildTimeTools.cmake)
+  perf_records_setup_dump_perfmon("intel_perfmon/" "${perf_records_dump_perfmon}" "perf_events_raw" "${GENERATED_HEADER}")
 endif()
 
 # compile warnings as error
