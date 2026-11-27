@@ -35,6 +35,7 @@ if(perf_records_dump_perfmon)
   execute_process(
     COMMAND
     "${Python3_EXECUTABLE}" "${DUMP_PERFMON_SCRIPT}"
+    "${CMAKE_CURRENT_LIST_DIR}/intel_perfmon/"
     "${perf_records_dump_perfmon}" perf_events_raw
     "${GENERATED_HEADER}"
     WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}"

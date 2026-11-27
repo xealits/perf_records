@@ -16,6 +16,7 @@ logger.addHandler(stderr_handler)
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Dump perfmon records')
+    parser.add_argument('path_to_perfmon', help='Path to perfmon directory')
     parser.add_argument('model', help='Intel CPU model')
     parser.add_argument('map_symbol', help='Event map symbol name in the generated header')
     parser.add_argument('out_file', help='Path to the output header file')
@@ -32,7 +33,7 @@ def update_events_dict(dest, events, event_type):
 def get_cpu_events(model, perfmon_dir=Path('./intel_perfmon')):
     cpu_events = {}
 
-    with open('intel_perfmon/mapfile.csv') as f:
+    with open(args.path_to_perfmon + '/mapfile.csv') as f:
         mapreader = csv.DictReader(f)
 
         for row in mapreader:

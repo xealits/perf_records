@@ -66,7 +66,7 @@ And looking at (not really) its code:
 
 Using Intel perfmon description of events, and RAW PMU events in `perf_event`:
 ```
-./dump_perfmon.py GenuineIntel-6-BE known_events_gracemont > known_events_gracemont.hpp
+./dump_perfmon.py intel_perfmon/ GenuineIntel-6-BE perf_events_raw_gracemont include/perf_records/events_map_raw.hpp
 ```
 
 
