@@ -22,6 +22,22 @@
         "CC": "clang",
         "CXX": "clang++"
       }
+    },
+    {
+      "name": "gracemont",
+      "description": "Build with Gracemont perfmon events",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "perf_records_dump_perfmon": "GenuineIntel-6-BE"
+      },
+      "environment": {
+        "CC": "clang",
+        "CXX": "clang++"
+      }
     }
   ],
 
@@ -29,6 +45,11 @@
     {
       "name": "default",
       "configurePreset": "default",
+      "jobs": 8
+    },
+    {
+      "name": "gracemont",
+      "configurePreset": "gracemont",
       "jobs": 8
     }
   ],

@@ -51,7 +51,12 @@ if(perf_records_dump_perfmon)
   #endif()
 
   include(tools/BuildTimeTools.cmake)
-  perf_records_setup_dump_perfmon("intel_perfmon/" "${perf_records_dump_perfmon}" "perf_events_raw" "${GENERATED_HEADER}" "${GENERATED_TARGET}")
+  perf_records_setup_dump_perfmon("${GENERATED_TARGET}"
+    "${CMAKE_CURRENT_LIST_DIR}/intel_perfmon/"
+    "${perf_records_dump_perfmon}"
+    "perf_events_raw_testing"
+    "${GENERATED_HEADER}"
+  )
 endif()
 
 # compile warnings as error

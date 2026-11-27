@@ -1,4 +1,4 @@
-function(perf_records_setup_dump_perfmon PATH_TO_PERFMON_DIR PERFMON_FAMILY_MODEL MAP_NAME GEN_HEADER_PATH GEN_TARGET)
+function(perf_records_setup_dump_perfmon GEN_TARGET PATH_TO_PERFMON_DIR PERFMON_FAMILY_MODEL MAP_NAME GEN_HEADER_PATH)
 message(STATUS "${PROJECT_NAME} > BuildTimeTools perf_records_setup_dump_perfmon for ${PERFMON_FAMILY_MODEL} in ${GEN_HEADER_PATH}")
 
 include(ExternalProject)
@@ -20,11 +20,11 @@ ExternalProject_Add(pmu_tool_proj
     BINARY_DIR "${TOOL_CACHE_DIR}/build"
     STAMP_DIR  "${TOOL_CACHE_DIR}/stamp"
     CMAKE_ARGS
-        -DCMAKE_BUILD_TYPE=Release
+        -DCMAKE_BUILD_TYPE=Debug
         -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
         -Dgen_pmu_tool_WRITE_CLANGD_COMPILATION_DATABASE=ON
         -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${TOOL_BIN_DIR}
-        -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=${TOOL_BIN_DIR}
+        #-DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=${TOOL_BIN_DIR}
     BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --config Release
     INSTALL_COMMAND ""
     BUILD_ALWAYS TRUE
