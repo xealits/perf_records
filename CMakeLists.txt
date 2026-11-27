@@ -32,6 +32,8 @@ if(perf_records_dump_perfmon)
   #set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${DUMP_PERFMON_SCRIPT}")
   #set(GENERATED_HEADER "${CMAKE_CURRENT_LIST_DIR}/include/perf_records/events_map_raw.hpp")
   set(GENERATED_HEADER "${CMAKE_CURRENT_LIST_DIR}/include/perf_records/events_map_raw_testing.hpp")
+  get_filename_component(GENERATED_TARGET "${GENERATED_HEADER}" NAME_WE)
+  message(STATUS "${PROJECT_NAME} > got ${GENERATED_TARGET}")
 
   #find_package(Python3 REQUIRED COMPONENTS Interpreter)
   #execute_process(
@@ -49,7 +51,7 @@ if(perf_records_dump_perfmon)
   #endif()
 
   include(tools/BuildTimeTools.cmake)
-  perf_records_setup_dump_perfmon("intel_perfmon/" "${perf_records_dump_perfmon}" "perf_events_raw" "${GENERATED_HEADER}")
+  perf_records_setup_dump_perfmon("intel_perfmon/" "${perf_records_dump_perfmon}" "perf_events_raw" "${GENERATED_HEADER}" "${GENERATED_TARGET}")
 endif()
 
 # compile warnings as error

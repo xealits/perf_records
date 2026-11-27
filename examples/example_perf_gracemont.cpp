@@ -3,9 +3,9 @@
 
 #include "perf_records/events_map.hpp"
 #include "perf_records/perf_counters.hpp"
-#include "perf_records/events_map_raw.hpp"
+#include "perf_records/events_map_raw_testing.hpp"
 
-using PerfCounter = perf_records::PerfCounter<perf_records::perf_events_basic, perf_records::perf_events_raw>;
+using PerfCounter = perf_records::PerfCounter<perf_records::perf_events_basic, perf_records::perf_events_raw_testing>;
 
 struct AppStats {
   unsigned long long counter{0};

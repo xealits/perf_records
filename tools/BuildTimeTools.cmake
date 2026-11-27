@@ -1,5 +1,5 @@
-function(perf_records_setup_dump_perfmon PATH_TO_PERFMON_DIR PERFMON_FAMILY_MODEL MAP_NAME GEN_HEADER_PATH)
-message(STATUS "${PROJECT_NAME} > BuildTimeTools perf_records_setup_dump_perfmon for ${PERFMON_FAMILY_MODEL}")
+function(perf_records_setup_dump_perfmon PATH_TO_PERFMON_DIR PERFMON_FAMILY_MODEL MAP_NAME GEN_HEADER_PATH GEN_TARGET)
+message(STATUS "${PROJECT_NAME} > BuildTimeTools perf_records_setup_dump_perfmon for ${PERFMON_FAMILY_MODEL} in ${GEN_HEADER_PATH}")
 
 include(ExternalProject)
 
@@ -53,4 +53,18 @@ add_custom_command(
     VERBATIM
 )
 
+# same type INTERFACE target as all the headers include/perf_records
+message(STATUS "${PROJECT_NAME} > BuildTimeTools perf_records_setup_dump_perfmon add target header for ${MAP_NAME} in ${GEN_TARGET}")
+
+set(target_name perf_records_${GEN_TARGET})
+add_library(${target_name} INTERFACE "${GEN_HEADER_PATH}")
+set_target_properties(${target_name} PROPERTIES EXPORT_NAME ${GEN_TARGET})
+target_include_directories(${target_name} INTERFACE
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/../>"
+  "$<INSTALL_INTERFACE:include>"
+)
+set(target_alias "perf_records::${GEN_TARGET}")
+add_library(perf_records::${GEN_TARGET} ALIAS ${target_name})
+
+message(STATUS "${PROJECT_NAME} > BuildTimeTools perf_records_setup_dump_perfmon added ${target_name} ${target_alias}")
 endfunction()
